@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "context-monitor": {
+      "command": "bash",
+      "args": [
+        "${CLAUDE_PLUGIN_ROOT}/mcp-servers/context-monitor/run-server.sh"
+      ]
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "name": "jarpa",
+  "version": "0.1.0",
+  "description": "Structured documentation methodology for AI-assisted software engineering projects",
+  "author": {
+    "name": "Pierre Gaufillet",
+    "email": "pierre.gaufillet@bergamote.eu"
+  },
+  "homepage": "https://github.com/pgaufillet/jarpa"
+}

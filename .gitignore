@@ -1,0 +1,28 @@
+# JARPA Plugin - Git Ignore
+
+# JARPA working area (plugin development uses JARPA for itself)
+jarpa/
+
+# User-specific settings (should not be committed)
+.claude/*.local.md
+
+# Planning files (generated during sessions)
+.claude/plans/
+
+# Python cache (for MCP server)
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# MCP server data
+/tmp/claude-context.json
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
