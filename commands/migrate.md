@@ -149,7 +149,17 @@ Check if `.gitignore` exists. If yes, append; if no, create:
 
 Verify no duplicate entries before appending.
 
-### 7. Validate jarpa/ Structure
+### 7. Inject JARPA rules into CLAUDE.md
+
+Same logic as `/jarpa:init`:
+- Read `CLAUDE.md` in project root (may not exist — especially if removed/archived in step 5)
+- Read inject template from `${CLAUDE_PLUGIN_ROOT}/templates/CLAUDE_MD_INJECT.md`
+- If CLAUDE.md does not exist: create it with the template content
+- If CLAUDE.md exists but does NOT contain `<!-- JARPA:BEGIN`: append template (with a blank line separator)
+- If CLAUDE.md exists and contains `<!-- JARPA:BEGIN`: skip (already injected)
+- Report action taken
+
+### 8. Validate jarpa/ Structure
 
 **Check required files exist**:
 - jarpa/PROJECT_PLAN.md
@@ -162,7 +172,7 @@ Verify no duplicate entries before appending.
 - If missing: "Warning: jarpa/[file] not found. Create manually or run /jarpa:init"
 - If all present: "✓ All documentation files present"
 
-### 8. Check Journal Integrity
+### 9. Check Journal Integrity
 
 Quick validation:
 ```bash
@@ -172,15 +182,16 @@ wc -l jarpa/JOURNAL.md
 If > 1500 lines, inform user:
 "Consider running /jarpa:archive after migration to manage journal size."
 
-### 9. Commit Migration
+### 10. Commit Migration
 
 If git repository exists and user agrees:
 
 ```bash
-git add .claude/jarpa.local.md .gitignore
+git add .claude/jarpa.local.md .gitignore CLAUDE.md
 git commit -m "Migrate to JARPA plugin
 
 - Add plugin settings file (.claude/jarpa.local.md)
+- Inject JARPA rules into CLAUDE.md
 - Remove template artifacts
 - Update .gitignore for plugin compatibility
 
@@ -189,7 +200,7 @@ Plugin version: 0.1.0
 "
 ```
 
-### 10. Report Summary
+### 11. Report Summary
 
 Present migration summary:
 
@@ -201,6 +212,7 @@ Project: [Name]
 Migration Date: [YYYY-MM-DD]
 
 ✓ Created settings: .claude/jarpa.local.md
+✓ Injected JARPA rules into CLAUDE.md
 ✓ Updated .gitignore
 ✓ Removed legacy files:
   - .codex/

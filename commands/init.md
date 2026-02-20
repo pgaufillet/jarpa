@@ -59,7 +59,15 @@ This command sets up the complete JARPA documentation structure with safe re-run
    Project-specific notes and configuration.
    ```
 
-7. **Write initial journal entry** (only if JOURNAL.md was created or overwritten):
+7. **Inject JARPA rules into CLAUDE.md**:
+   - Read `CLAUDE.md` in project root (may not exist)
+   - Read inject template from `${CLAUDE_PLUGIN_ROOT}/templates/CLAUDE_MD_INJECT.md`
+   - If CLAUDE.md does not exist: create it with the template content
+   - If CLAUDE.md exists but does NOT contain `<!-- JARPA:BEGIN`: append template (with a blank line separator)
+   - If CLAUDE.md exists and contains `<!-- JARPA:BEGIN`: skip (already injected)
+   - Report action taken: "Created CLAUDE.md with JARPA rules" / "Appended JARPA rules to CLAUDE.md" / "CLAUDE.md already has JARPA rules, skipped"
+
+8. **Write initial journal entry** (only if JOURNAL.md was created or overwritten):
    Append to jarpa/JOURNAL.md:
    ```markdown
 
@@ -75,6 +83,7 @@ This command sets up the complete JARPA documentation structure with safe re-run
    - Created/updated: jarpa/ARCHITECTURE.md
    - Created/updated: jarpa/JOURNAL.md (this file)
    - Created/updated: .claude/jarpa.local.md
+   - Created/updated: CLAUDE.md (JARPA rules)
 
    ### Technical Decisions & Rationale
    - Decision: Use a repo-wide jarpa/ folder with one cumulative journal and four up-to-date documents.
@@ -88,6 +97,7 @@ This command sets up the complete JARPA documentation structure with safe re-run
      - jarpa/ARCHITECTURE.md
      - jarpa/JOURNAL.md
      - .claude/jarpa.local.md
+     - CLAUDE.md
 
    ### Results
    - Documentation skeleton is ready. Next session should fill Goal/Milestones/Current Step and set the first session-sized task.
@@ -100,7 +110,7 @@ This command sets up the complete JARPA documentation structure with safe re-run
    - None.
    ```
 
-8. **Report summary**:
+9. **Report summary**:
    - List files created
    - List files skipped (if any)
    - Next steps guidance
