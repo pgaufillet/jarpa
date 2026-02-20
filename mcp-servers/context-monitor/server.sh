@@ -12,6 +12,13 @@ set -uo pipefail
 
 CONTEXT_FILE="/tmp/claude-context.json"
 
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --context-file) CONTEXT_FILE="$2"; shift 2 ;;
+        *) shift ;;
+    esac
+done
+
 # Canonical thresholds — master values in jarpa/ARCHITECTURE.md "Canonical Values"
 THRESHOLD_WARNING=75
 THRESHOLD_CRITICAL=90

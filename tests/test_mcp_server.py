@@ -25,19 +25,13 @@ SERVER_SH = Path(__file__).parent.parent / "mcp-servers" / "context-monitor" / "
 def call_server(messages, context_file):
     """Send JSON-RPC messages to the bash server, return parsed responses.
 
-    Always patches the hardcoded context file path to isolate tests from
-    the real /tmp/claude-context.json (which may be active if Claude Code
-    is running).
+    Runs the real server.sh with --context-file to isolate tests from
+    the live /tmp/claude-context.json.
     """
     stdin_data = "\n".join(json.dumps(m) for m in messages) + "\n"
 
-    script = SERVER_SH.read_text().replace(
-        'CONTEXT_FILE="/tmp/claude-context.json"',
-        f'CONTEXT_FILE="{context_file}"',
-    )
-
     result = subprocess.run(
-        ["bash", "-c", script],
+        [str(SERVER_SH), "--context-file", context_file],
         input=stdin_data,
         capture_output=True,
         text=True,
