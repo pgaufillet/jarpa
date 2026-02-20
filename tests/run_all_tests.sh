@@ -96,6 +96,33 @@ if $FULL_TESTS; then
     fi
 fi
 
+# Informational: Plugin Footprint
+echo ""
+echo "────────────────────────────────────────────────────────────────"
+echo ""
+echo -e "${BLUE}[info]${NC} Plugin context footprint..."
+echo ""
+if "$PLUGIN_ROOT/tools/footprint.sh"; then
+    echo ""
+    echo -e "${GREEN}✓ Footprint measurement complete${NC}"
+else
+    echo ""
+    echo -e "${YELLOW}⚠ Footprint measurement failed (non-blocking)${NC}"
+fi
+
+echo ""
+echo "────────────────────────────────────────────────────────────────"
+echo ""
+echo -e "${BLUE}[info]${NC} Plugin overlap analysis..."
+echo ""
+if python3 "$PLUGIN_ROOT/tools/overlap.py"; then
+    echo ""
+    echo -e "${GREEN}✓ Overlap analysis complete${NC}"
+else
+    echo ""
+    echo -e "${YELLOW}⚠ Overlap analysis failed (non-blocking)${NC}"
+fi
+
 echo ""
 echo "════════════════════════════════════════════════════════════════"
 echo ""
