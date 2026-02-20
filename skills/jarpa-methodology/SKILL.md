@@ -57,15 +57,22 @@ Each action must have: a clear goal, a definition of done, a bounded scope.
 
 ## Journal (Cumulative)
 
-JOURNAL.md is append-only. Each session entry includes:
-- Session date and title
-- Goal and definition of done
-- Actions performed, decisions made, alternatives considered
-- Files changed, results, remaining work
-- Risks, notes, or open questions
+JOURNAL.md is append-only. Canonical entry format:
 
-**Archiving:** When JOURNAL.md exceeds 1500 lines, archive older sessions to
-`jarpa/archive/JOURNAL_*.md`. Keep 5-10 recent sessions in active file.
+```markdown
+## [YYYY-MM-DD] — [Session Title]
+
+### Goal
+### Actions Performed
+### Technical Decisions & Rationale
+### Changes Made
+### Results
+### Remaining Work / Next Step
+### Notes / Risks
+```
+
+**Archiving:** When JOURNAL.md exceeds the configured threshold (default: 1500 lines),
+archive older sessions to `jarpa/archive/`. Keep 5-10 recent sessions in active file.
 
 ## Requirements and Architecture
 
@@ -95,7 +102,7 @@ JOURNAL.md is append-only. Each session entry includes:
 The assistant has access to `get_context_status` and `should_close_session`
 MCP tools. Use these periodically during long sessions.
 
-When context reaches ~75%, stop gracefully:
+At warning threshold (75%), plan session closure. At critical threshold (90%), stop gracefully:
 1. Complete or checkpoint current atomic step.
 2. Inform user and recommend closing session.
 3. Follow End of Session protocol.
@@ -149,30 +156,6 @@ Examples: "Add user authentication", "Fix login crash on empty password"
 
 **If a test cannot be implemented:** Mark it as `SKIP` with a clear reason, not as `PASS`. Document in TODO.md what's needed to implement it properly.
 
-## Journal Integrity Safeguards
+## Journal Integrity
 
-### Session Numbering and Archiving
-
-**Session numbering discipline:**
-1. Number sessions sequentially (Session 1, Session 2, etc.)
-2. **Never skip numbers** - if work is done, it must get a journal entry
-3. If you forget to write a session entry, retroactively add it when discovered
-4. When archiving, verify sessions are in numerical order
-
-**Archiving checklist:**
-1. Count total lines in JOURNAL.md before archiving
-2. Identify session boundaries (lines starting with `## Session N:`)
-3. **Verify sequential numbering** - no gaps, no duplicates
-4. Create archive: `jarpa/archive/JOURNAL_<date-range>_S<first>-<last>.md`
-5. Update JOURNAL.md header with new archive reference
-6. Keep 5-10 most recent sessions in active file
-7. **Verify archived sessions are in numerical order**
-
-**Recovery from issues:**
-- **Missing session**: Search git commits for work done during gap; retroactively document
-- **Out-of-order sessions**: Reorganize archives; add reorganization note to JOURNAL.md header
-- **Lost journal entry**: Check git log, reconstruct from commits and context
-
-**Prevention:**
-- End each session with journal entry BEFORE committing code
-- Use jarpa-housekeeping skill for archiving (automated validation)
+Sessions must be numbered sequentially with no gaps or duplicates. The journal-validator agent enforces this before archiving operations. Always write the journal entry before committing code.

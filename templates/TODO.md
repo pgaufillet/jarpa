@@ -1,7 +1,7 @@
 # Todo List
 
 ## Now (Current Session)
-➡️ **Current:** <single actionable task>
+[ONGOING] <single actionable task>
 - [ ] <subtask>  
       DoD: <explicit definition of done>
 

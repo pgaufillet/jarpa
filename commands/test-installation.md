@@ -57,21 +57,15 @@ If the server is not listed or has errors, report the issue.
 ### Test 5: Hook Configuration
 
 Hooks cannot be directly tested without triggering events, but verify:
-- Read the hooks.json file at the plugin root
+- Read the hooks.json file at the plugin root (use Glob to find `**/hooks/hooks.json` under the JARPA plugin directory)
 - Confirm it contains: SessionStart, Stop, PreCompact, PreToolUse hooks
-- Verify script paths resolve correctly
-
-```bash
-ls -la "$(dirname "$(dirname "$0")")/hooks/scripts/"
-```
+- For each hook, verify the referenced script file exists and is executable
 
 ### Test 6: Template Files
 
 Verify template files exist and are readable:
-
-```bash
-ls -la "$(dirname "$(dirname "$0")")/templates/"
-```
+- Use Glob to find `**/templates/*.md` under the JARPA plugin directory
+- Verify all 5 expected templates are present
 
 Expected templates:
 - PROJECT_PLAN.md

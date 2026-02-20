@@ -4,6 +4,10 @@
 
 JARPA is a Claude Code plugin providing structured documentation methodology for AI-assisted software engineering. The acronym stands for **J**ournal, **A**rchitecture, **R**equirements, **P**lan, **A**ctions.
 
+## Plugin Development Methodology
+
+Self-apply skills/jarpa-methodology/SKILL.md.
+
 ## Plugin Structure
 
 ```
@@ -15,7 +19,7 @@ hooks/                         # Hook definitions and scripts
 mcp-servers/                   # MCP server (context-monitor)
 templates/                     # Template files for /jarpa:init
 tests/                         # Automated test suite
-docs/                          # Development documentation
+jarpa/                         # JARPA logbook (gitignored, local working docs)
 ```
 
 ## Key Conventions
@@ -34,6 +38,3 @@ docs/                          # Development documentation
 ./tests/run_all_tests.sh --full
 ```
 
-## Roadmap
-
-See `docs/ROADMAP.md` for the multi-agent orchestration enhancement plan.
