@@ -188,9 +188,9 @@ Overall: ✅ PASSED with minor warnings
 ## Settings Awareness
 
 Read `.claude/jarpa.local.md` for:
-- `paths.docs` - Documentation directory (default: "./jarpa")
-- `paths.archives` - Archive directory (default: "./jarpa/archive")
 - `thresholds.journal_lines` - Archive threshold (default: 1500)
+
+Documentation lives in `jarpa/`, archives in `jarpa/archive/`.
 
 ## Integration Points
 

@@ -15,7 +15,6 @@ Automatically detects when archiving is needed based on line count and performs 
 
 1. **Check settings**:
    - Read `.claude/jarpa.local.md` for `thresholds.journal_lines` (default: 1500)
-   - Read `paths.docs` and `paths.archives` (defaults: "./jarpa" and "./jarpa/archive")
 
 2. **Count lines** in JOURNAL.md:
    ```bash
@@ -27,7 +26,7 @@ Automatically detects when archiving is needed based on line count and performs 
    - If line count >= threshold: Proceed with archiving
 
 4. **Invoke journal-validator agent**:
-   - Use Task tool with `subagent_type: journal-validator`
+   - Use Task tool with `subagent_type: jarpa:journal-validator`
    - Pass task: "Validate journal structure before archiving"
    - Agent will:
      - Extract session numbers

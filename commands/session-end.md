@@ -5,21 +5,21 @@ description: Complete end-of-session documentation updates
 
 # End Session Documentation
 
-Guide through end-of-session JARPA documentation updates using the jarpa-housekeeping agent.
+Guide through end-of-session JARPA documentation updates using the session-protocol agent.
 
 ## Behavior
 
-Invokes the jarpa-housekeeping agent to perform guided, interactive end-of-session documentation updates following JARPA methodology.
+Invokes the session-protocol agent to perform guided, interactive end-of-session documentation updates following JARPA methodology.
 
 ## Process
 
-1. **Invoke jarpa-housekeeping agent**:
-   - Use Task tool with `subagent_type: jarpa-housekeeping`
+1. **Invoke session-protocol agent**:
+   - Use Task tool with `subagent_type: jarpa:session-protocol`
    - Pass task description:
      ```
-     Perform end-of-session documentation updates:
-     1. Read current state of JOURNAL.md, TODO.md, PROJECT_PLAN.md
-     2. Guide user through creating journal entry for this session
+     Perform end-of-session workflow:
+     1. Gather session information from user (accomplishments, decisions, risks)
+     2. Create journal entry in JOURNAL.md using canonical format
      3. Update TODO.md: mark completed tasks, designate next task
      4. Update PROJECT_PLAN.md: reflect progress made
      5. Check if JOURNAL.md needs archiving (check threshold)
@@ -47,7 +47,7 @@ Invokes the jarpa-housekeeping agent to perform guided, interactive end-of-sessi
 
 ## Tools to Use
 
-- Task: Invoke jarpa-housekeeping agent
+- Task: Invoke session-protocol agent
 
 ## Example Usage
 
@@ -90,7 +90,7 @@ This command should be run:
 ## Automation
 
 This command is automatically triggered by:
-- SessionEnd (Stop) hook
+- Stop hook
 - PreCompact hook (when context usage is very high)
 
 Users can also invoke it manually when needed.

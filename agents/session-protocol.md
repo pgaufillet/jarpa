@@ -54,7 +54,8 @@ When triggered at session start:
    ```
 
 3. **Validate scope**:
-   - Check if current task scope fits one session (2-4 hours)
+   - Check if current task scope fits one working session
+   - Read `session.expected_duration` from settings (default: "2-4 hours")
    - If too large: Suggest splitting into smaller tasks
    - If unclear: Ask user for clarification
 
@@ -75,7 +76,7 @@ When triggered at session end:
    - Any remaining work or risks?
 
 2. **Create journal entry**:
-   - Format using JARPA journal structure:
+   - Format using JARPA canonical journal structure (kept here because agents run without access to the methodology skill):
      ```markdown
 
      ## [YYYY-MM-DD] — [Session Title]
@@ -123,15 +124,8 @@ When triggered at session end:
    - Highlight key accomplishments
    - State next task clearly
 
-## Working Session Guidelines
+## Scope Validation
 
-### Definition
-A working session is a focused work unit that:
-- Takes 2-4 hours of concentrated effort
-- Has clear completion criteria (Definition of Done)
-- Produces documented, meaningful results
-
-### Scope Validation
 When evaluating task scope:
 - ✅ Good: "Add login form validation with 3 rules"
 - ✅ Good: "Fix crash on empty password input"
@@ -162,9 +156,9 @@ If a task is too large:
 ## Settings Awareness
 
 Read `.claude/jarpa.local.md` for:
-- `paths.docs` - Documentation directory (default: "./docs")
 - `thresholds.journal_lines` - Archive threshold (default: 1500)
-- `session.expected_duration` - Session time guidance (default: "2-4 hours")
+
+Documentation lives in `jarpa/`, archives in `jarpa/archive/`. Session scope targets 2-4 hours of focused work.
 
 ## Error Handling
 
@@ -177,4 +171,4 @@ Read `.claude/jarpa.local.md` for:
 
 During long sessions, periodically suggest checking context status using MCP tools if available.
 
-When context approaches 75%, strongly recommend session-end protocol.
+Monitor context usage via MCP tools. At 75% (warning), recommend planning session closure. At 90% (critical), strongly recommend immediate session-end protocol.

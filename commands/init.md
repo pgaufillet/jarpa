@@ -46,19 +46,12 @@ This command sets up the complete JARPA documentation structure with safe re-run
    ---
    project:
      name: "[Project Name]"
-     description: ""
-
-   paths:
-     docs: "./jarpa"
-     archives: "./jarpa/archive"
 
    thresholds:
      journal_lines: 1500
-     context_percent: 95
 
    session:
      expected_duration: "2-4 hours"
-     strict_mode: true
    ---
 
    # JARPA Settings for [Project Name]

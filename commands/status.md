@@ -45,7 +45,7 @@ Read these files to extract current state:
 wc -l jarpa/JOURNAL.md
 ```
 
-If over 1500 lines, note that archiving is recommended.
+Read threshold from `.claude/jarpa.local.md` (`thresholds.journal_lines`, default: 1500). If over threshold, note that archiving is recommended.
 
 ### Step 4: Present formatted status
 

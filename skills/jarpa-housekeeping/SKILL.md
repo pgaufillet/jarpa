@@ -1,6 +1,6 @@
 ---
 name: jarpa-housekeeping
-description: JARPA documentation maintenance. Use for archiving JOURNAL.md, updating TODO.md, refreshing PROJECT_PLAN.md status, or end-of-session documentation updates.
+description: JARPA documentation maintenance. Use for archiving JOURNAL.md, updating TODO.md, or refreshing PROJECT_PLAN.md status.
 allowed-tools: Read, Write, Edit, Bash, Grep, Glob
 ---
 
@@ -22,18 +22,16 @@ All JARPA files are in `jarpa/`:
 
 Read user settings from `.claude/jarpa.local.md` (if exists) for:
 - `thresholds.journal_lines` - Archive threshold (default: 1500)
-- `paths.docs` - Documentation directory (default: "./jarpa")
-- `paths.archives` - Archive directory (default: "./jarpa/archive")
 
-Settings use YAML frontmatter. If no settings file exists, use defaults.
+Documentation lives in `jarpa/`, archives in `jarpa/archive/`. Settings use YAML frontmatter. If no settings file exists, use defaults.
 
 ## Task: Archive JOURNAL.md
 
-**Trigger:** When JOURNAL.md exceeds configured threshold (default: 1500 lines, read from settings).
+**Trigger:** When JOURNAL.md exceeds configured threshold (read `thresholds.journal_lines` from settings, default: 1500).
 
 **Process:**
 1. Count lines in `jarpa/JOURNAL.md`
-2. If > 1500 lines, identify sessions to archive (keep 5-10 recent sessions)
+2. If over threshold, identify sessions to archive (keep 5-10 recent sessions)
 3. Find session boundaries (lines starting with `## Session N:`)
 4. **VALIDATE:** Check session numbering is sequential with no gaps
    - Extract all session numbers from JOURNAL.md
@@ -80,17 +78,6 @@ Settings use YAML frontmatter. If no settings file exists, use defaults.
 2. Mark completed deliverables with checkmarks
 3. Update "Tasks in Progress" / "Completed" lists
 4. Add changelog entry if significant progress made
-
-## Task: Session End Protocol
-
-When asked to perform end-of-session updates:
-1. Read current state of JOURNAL.md, TODO.md, PROJECT_PLAN.md
-2. Based on session context provided:
-   - Append new journal entry (if content provided)
-   - Update TODO.md status
-   - Update PROJECT_PLAN.md progress
-3. Check if JOURNAL.md needs archiving (> 1500 lines)
-4. Report summary of changes made
 
 ## Execution Guidelines
 

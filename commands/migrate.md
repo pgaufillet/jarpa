@@ -71,19 +71,12 @@ Create `.claude/jarpa.local.md`:
 ---
 project:
   name: "[Detected Project Name]"
-  description: "Migrated from legacy JARPA template"
-
-paths:
-  docs: "./jarpa"
-  archives: "./jarpa/archive"
 
 thresholds:
   journal_lines: 1500
-  context_percent: 95
 
 session:
   expected_duration: "2-4 hours"
-  strict_mode: true
 
 migration:
   date: "[YYYY-MM-DD]"
