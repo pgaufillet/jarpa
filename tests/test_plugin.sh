@@ -302,7 +302,7 @@ test_mcp() {
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
     local mcp_json="$PLUGIN_ROOT/.mcp.json"
-    local server_py="$PLUGIN_ROOT/mcp-servers/context-monitor/server.py"
+    local server_sh="$PLUGIN_ROOT/mcp-servers/context-monitor/server.sh"
 
     assert_file_exists "$mcp_json" ".mcp.json exists"
     assert_json_valid "$mcp_json" ".mcp.json is valid JSON"
@@ -331,17 +331,12 @@ test_mcp() {
         log_fail "MCP server args should use \${CLAUDE_PLUGIN_ROOT}"
     fi
 
-    # Check Python server file
-    assert_file_exists "$server_py" "server.py exists"
-    if command -v python3 &>/dev/null; then
-        assert_python_syntax "$server_py" "server.py has valid Python syntax"
-    else
-        TESTS_RUN=$((TESTS_RUN + 1))
-        TESTS_PASSED=$((TESTS_PASSED + 1))
-        log_warn "  SKIP: python3 not available for syntax check"
-    fi
-    assert_contains "$server_py" "FastMCP" "server.py imports FastMCP"
-    assert_contains "$server_py" "@mcp.tool()" "server.py defines MCP tools"
+    # Check bash server file
+    assert_file_exists "$server_sh" "server.sh exists"
+    assert_executable "$server_sh" "server.sh is executable"
+    assert_shell_syntax "$server_sh" "server.sh has valid syntax"
+    assert_contains "$server_sh" "THRESHOLD_WARNING" "server.sh defines warning threshold"
+    assert_contains "$server_sh" "THRESHOLD_CRITICAL" "server.sh defines critical threshold"
 
     # Check wrapper script
     local wrapper="$PLUGIN_ROOT/mcp-servers/context-monitor/run-server.sh"
