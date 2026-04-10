@@ -129,8 +129,9 @@ over compacted conversations.
 
 1. **No AI attribution**: Never add "Co-Authored-By" for Claude/Anthropic.
 2. **No conventional prefixes**: No `feat:`, `fix:`, etc. Use plain titles.
-3. **Format**: Short title (50 chars), optional body (72 char wrap).
-4. **Atomic**: One consistent change per commit, easy to revert/cherry-pick.
+3. **No JARPA references**: Never mention session numbers ("Session 126"), milestone IDs, or any JARPA-internal concept in commit messages. Commits are public-facing and must be self-contained.
+4. **Format**: Short title (50 chars), optional body (72 char wrap).
+5. **Atomic**: One consistent change per commit, easy to revert/cherry-pick.
 
 Examples: "Add user authentication", "Fix login crash on empty password"
 

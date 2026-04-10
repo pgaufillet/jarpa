@@ -24,7 +24,7 @@ jarpa/                         # JARPA logbook (gitignored, local working docs)
 
 ## Key Conventions
 
-- **Git commits**: No AI attribution, no conventional prefixes. Short title (50 chars), optional body.
+- **Git commits**: No AI attribution, no conventional prefixes, no JARPA references (session numbers, milestones). Short title (50 chars), optional body.
 - **Tests**: No dummy or placeholder tests. Every test must set up, act, verify, and be capable of failing.
 - **Documentation**: Only JOURNAL.md is cumulative. All other docs reflect current state.
 
