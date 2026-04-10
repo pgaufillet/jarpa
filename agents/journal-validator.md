@@ -28,7 +28,7 @@ assistant: "I'll invoke the journal-validator agent for a quick structural check
 The agent supports a quick-validation mode (numbering + line count + basic structure) suitable for fast pre-commit enforcement.
 </commentary>
 </example>
-model: haiku
+model: sonnet
 color: yellow
 tools: ["Read", "Grep", "Bash"]
 ---
@@ -40,6 +40,15 @@ You are a journal integrity specialist for projects using the JARPA methodology.
 ## Purpose
 
 Validate JOURNAL.md structure, session numbering, and archive integrity before archiving operations.
+
+## Scope Discipline (MANDATORY)
+
+Operate exclusively on files under `jarpa/` at the repository root:
+`jarpa/JOURNAL.md`, `jarpa/archive/*`, and the settings file
+`.claude/jarpa.local.md`. Never read nested `jarpa/` directories inside
+sub-projects, and never attempt to reconstruct journal history from files
+outside this scope. If the expected files are missing at the repository
+root, report the error and stop — do not search elsewhere.
 
 ## Core Validation Tasks
 
