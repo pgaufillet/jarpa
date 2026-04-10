@@ -1,17 +1,36 @@
 ---
 name: journal-validator
-description: Journal structure and session numbering validation
-when-to-trigger: |
-  Trigger this agent when:
-  - Before archiving JOURNAL.md (via /jarpa:archive)
-  - On request for journal integrity check
-  - Optionally via pre-commit hook for validation
-color: yellow
+description: Use this agent to validate the structure, session numbering and date integrity of JOURNAL.md before archiving, or whenever an integrity check of the JARPA journal is requested. Examples:
+
+<example>
+Context: The user runs /jarpa:archive because JOURNAL.md has exceeded its line threshold.
+user: "/jarpa:archive"
+assistant: "Before archiving, I'll use the journal-validator agent to verify session numbering and structure."
+<commentary>
+Archiving must not proceed on a malformed journal. The validator enforces sequential session numbering (no gaps, no duplicates) and required section presence, then produces an archive split recommendation.
+</commentary>
+</example>
+
+<example>
+Context: The user suspects the journal has drifted and wants to audit it.
+user: "can you check if JOURNAL.md is still consistent?"
+assistant: "I'll run the journal-validator agent to perform a full integrity check."
+<commentary>
+The agent reports gaps, duplicates, missing required sections and out-of-order dates, with specific line numbers and recovery recommendations.
+</commentary>
+</example>
+
+<example>
+Context: A pre-commit policy wants to block commits that corrupt the journal.
+user: "validate the journal before I commit this"
+assistant: "I'll invoke the journal-validator agent for a quick structural check."
+<commentary>
+The agent supports a quick-validation mode (numbering + line count + basic structure) suitable for fast pre-commit enforcement.
+</commentary>
+</example>
 model: haiku
-allowed-tools:
-  - Read
-  - Grep
-  - Bash
+color: yellow
+tools: ["Read", "Grep", "Bash"]
 ---
 
 # Journal Validator Agent

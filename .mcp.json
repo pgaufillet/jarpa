@@ -3,7 +3,7 @@
     "context-monitor": {
       "command": "bash",
       "args": [
-        "${CLAUDE_PLUGIN_ROOT}/mcp-servers/context-monitor/run-server.sh"
+        "${CLAUDE_PLUGIN_ROOT}/mcp-servers/context-monitor/server.sh"
       ]
     }
   }

@@ -78,6 +78,48 @@ Add to `~/.claude/settings.json`:
    - Before commits: reminds you to update the journal
    - On session end: guides you through journal entry and doc updates
 
+## Context Monitoring
+
+JARPA ships a Claude Code statusline that powers proactive context-window
+monitoring. The pipeline has three stages:
+
+```
+Claude Code turn
+      │
+      ▼
+statusline.sh ──writes──▶ jarpa-context.json ──reads──▶ server.sh (MCP)
+      │                        (broker file)                 │
+      ▼                                                       ▼
+Visible status line                              get_context_status
+with gauge + %                                  should_close_session
+                                                    check_health
+```
+
+- **Thresholds**: 75% = WARNING (plan to close session), 90% = CRITICAL (close now).
+- **Broker file path**: `${XDG_RUNTIME_DIR:-${TMPDIR:-/tmp}}/jarpa-context.json`
+  by default. Override with `JARPA_CONTEXT_FILE` if needed.
+- **Auto-configuration**: `/jarpa:init` offers to install the statusline in
+  your project's `.claude/settings.json`. Existing statuslines are never
+  overwritten — if you already have one, chain the two commands manually.
+
+If `get_context_status` reports no data, call `check_health` via the MCP
+server for an end-to-end diagnosis of the pipeline (file presence,
+staleness, statusline script status).
+
+### Manual statusline setup
+
+If you skipped auto-configuration, add this to your project's
+`.claude/settings.json`:
+
+```json
+{
+  "statusLine": {
+    "type": "command",
+    "command": "bash ${CLAUDE_PLUGIN_ROOT}/mcp-servers/context-monitor/statusline.sh"
+  }
+}
+```
+
 ## Commands
 
 | Command | Description |

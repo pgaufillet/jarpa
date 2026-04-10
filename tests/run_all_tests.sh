@@ -40,9 +40,9 @@ echo "╚═══════════════════════�
 echo ""
 
 FAILED=0
-TOTAL_SUITES=2
+TOTAL_SUITES=3
 if $FULL_TESTS; then
-    TOTAL_SUITES=3
+    TOTAL_SUITES=4
 fi
 
 # Test 1: Plugin Structure Tests (shell)
@@ -73,12 +73,28 @@ else
     FAILED=1
 fi
 
-# Test 3: Installation Tests (requires Claude CLI)
+echo ""
+echo "────────────────────────────────────────────────────────────────"
+echo ""
+
+# Test 3: Threshold consistency (anti-drift)
+echo -e "${BLUE}[3/$TOTAL_SUITES]${NC} Running threshold consistency checks..."
+echo ""
+if "$SCRIPT_DIR/test_thresholds_consistency.sh"; then
+    echo ""
+    echo -e "${GREEN}✓ Threshold consistency passed${NC}"
+else
+    echo ""
+    echo -e "${RED}✗ Threshold consistency failed${NC}"
+    FAILED=1
+fi
+
+# Test 4: Installation Tests (requires Claude CLI)
 if $FULL_TESTS; then
     echo ""
     echo "────────────────────────────────────────────────────────────────"
     echo ""
-    echo -e "${BLUE}[3/$TOTAL_SUITES]${NC} Running Claude Code installation tests..."
+    echo -e "${BLUE}[4/$TOTAL_SUITES]${NC} Running Claude Code installation tests..."
     echo ""
 
     if command -v claude &>/dev/null; then

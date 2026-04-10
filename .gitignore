@@ -16,8 +16,10 @@ __pycache__/
 *.so
 .Python
 
-# MCP server data
+# MCP server broker file (legacy path, kept for backwards compatibility)
 /tmp/claude-context.json
+# MCP server broker file (current path pattern)
+jarpa-context.json
 
 # IDE and editor files
 .vscode/

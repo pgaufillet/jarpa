@@ -337,12 +337,34 @@ test_mcp() {
     assert_shell_syntax "$server_sh" "server.sh has valid syntax"
     assert_contains "$server_sh" "THRESHOLD_WARNING" "server.sh defines warning threshold"
     assert_contains "$server_sh" "THRESHOLD_CRITICAL" "server.sh defines critical threshold"
+    assert_contains "$server_sh" "check_health" "server.sh exposes check_health tool"
 
-    # Check wrapper script
+    # .mcp.json must point directly at server.sh (no run-server.sh wrapper)
+    TESTS_RUN=$((TESTS_RUN + 1))
+    if jq -e '.mcpServers["context-monitor"].args[] | select(endswith("/server.sh"))' "$mcp_json" >/dev/null 2>&1; then
+        TESTS_PASSED=$((TESTS_PASSED + 1))
+        log_success ".mcp.json args point directly to server.sh"
+    else
+        TESTS_FAILED=$((TESTS_FAILED + 1))
+        log_fail ".mcp.json args should reference server.sh directly"
+    fi
+
+    # Legacy wrapper must be gone
+    TESTS_RUN=$((TESTS_RUN + 1))
     local wrapper="$PLUGIN_ROOT/mcp-servers/context-monitor/run-server.sh"
-    assert_file_exists "$wrapper" "run-server.sh wrapper exists"
-    assert_executable "$wrapper" "run-server.sh is executable"
-    assert_shell_syntax "$wrapper" "run-server.sh has valid syntax"
+    if [[ ! -e "$wrapper" ]]; then
+        TESTS_PASSED=$((TESTS_PASSED + 1))
+        log_success "Legacy run-server.sh wrapper removed"
+    else
+        TESTS_FAILED=$((TESTS_FAILED + 1))
+        log_fail "Legacy run-server.sh wrapper should not exist"
+    fi
+
+    # Statusline script shipped with the plugin
+    local statusline="$PLUGIN_ROOT/mcp-servers/context-monitor/statusline.sh"
+    assert_file_exists "$statusline" "statusline.sh exists"
+    assert_executable "$statusline" "statusline.sh is executable"
+    assert_shell_syntax "$statusline" "statusline.sh has valid syntax"
 }
 
 test_agents() {

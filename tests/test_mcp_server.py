@@ -78,17 +78,17 @@ class TestToolsList(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
-    def test_lists_two_tools(self):
-        """Server lists exactly two tools."""
+    def test_lists_three_tools(self):
+        """Server lists exactly three tools."""
         responses = call_server([
             {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}},
             {"jsonrpc": "2.0", "id": 2, "method": "tools/list"},
         ], context_file=self.context_file)
         tools_resp = responses[1]
         tools = tools_resp["result"]["tools"]
-        self.assertEqual(len(tools), 2)
+        self.assertEqual(len(tools), 3)
         names = {t["name"] for t in tools}
-        self.assertEqual(names, {"get_context_status", "should_close_session"})
+        self.assertEqual(names, {"get_context_status", "should_close_session", "check_health"})
 
     def test_tool_schemas_present(self):
         """Each tool has an inputSchema."""
@@ -243,6 +243,138 @@ class TestShouldCloseSession(unittest.TestCase):
         self.write_context({"usage_percent": 50})
         result = self.call_tool(threshold=60)
         self.assertEqual(result["threshold"], 60)
+
+
+class TestCheckHealth(unittest.TestCase):
+    """Tests for the check_health tool."""
+
+    def setUp(self):
+        self.temp_dir = tempfile.mkdtemp()
+        self.context_file = os.path.join(self.temp_dir, "jarpa-context.json")
+
+    def tearDown(self):
+        shutil.rmtree(self.temp_dir, ignore_errors=True)
+
+    def write_context(self, data):
+        with open(self.context_file, "w") as f:
+            json.dump(data, f)
+
+    def call_tool(self):
+        responses = call_server([
+            {"jsonrpc": "2.0", "id": 1, "method": "tools/call",
+             "params": {"name": "check_health", "arguments": {}}}
+        ], context_file=self.context_file)
+        text = responses[0]["result"]["content"][0]["text"]
+        return json.loads(text)
+
+    def test_broken_when_no_context_file(self):
+        """Overall is BROKEN when context file is missing."""
+        result = self.call_tool()
+        self.assertEqual(result["overall"], "BROKEN")
+        self.assertFalse(result["context_present"])
+        self.assertEqual(result["context_age_seconds"], -1)
+        self.assertEqual(result["context_stale"], "unknown")
+
+    def test_reports_context_file_path(self):
+        """check_health reports the resolved context file path."""
+        result = self.call_tool()
+        self.assertEqual(result["context_file"], self.context_file)
+
+    def test_ok_when_context_fresh(self):
+        """Overall is OK when context file exists and is fresh."""
+        self.write_context({"usage_percent": 50})
+        result = self.call_tool()
+        self.assertEqual(result["overall"], "OK")
+        self.assertTrue(result["context_present"])
+        self.assertEqual(result["context_stale"], "false")
+        self.assertGreaterEqual(result["context_age_seconds"], 0)
+
+    def test_degraded_when_context_stale(self):
+        """Overall is DEGRADED when context file is older than stale threshold."""
+        self.write_context({"usage_percent": 42})
+        # Backdate the file by 1 hour (well past 600s stale threshold)
+        one_hour_ago = __import__("time").time() - 3600
+        os.utime(self.context_file, (one_hour_ago, one_hour_ago))
+        result = self.call_tool()
+        self.assertEqual(result["overall"], "DEGRADED")
+        self.assertEqual(result["context_stale"], "true")
+        self.assertGreater(result["context_age_seconds"], 600)
+
+    def test_reports_statusline_script(self):
+        """check_health reports whether the statusline script is installed."""
+        result = self.call_tool()
+        self.assertIn("statusline_script", result)
+        self.assertIn("statusline_present", result)
+        self.assertIn("statusline_executable", result)
+        # In the dev checkout, the statusline script should exist and be executable.
+        self.assertTrue(result["statusline_present"])
+        self.assertTrue(result["statusline_executable"])
+
+    def test_stale_threshold_reported(self):
+        """check_health reports the stale_after_seconds threshold it used."""
+        result = self.call_tool()
+        self.assertEqual(result["stale_after_seconds"], 600)
+
+
+class TestContextFileResolution(unittest.TestCase):
+    """Tests for context file path resolution rules."""
+
+    def test_env_var_override(self):
+        """JARPA_CONTEXT_FILE env var is used when --context-file is not provided."""
+        temp_dir = tempfile.mkdtemp()
+        try:
+            ctx_path = os.path.join(temp_dir, "env-override.json")
+            with open(ctx_path, "w") as f:
+                json.dump({"usage_percent": 33}, f)
+            env = os.environ.copy()
+            env["JARPA_CONTEXT_FILE"] = ctx_path
+            msg = json.dumps({
+                "jsonrpc": "2.0", "id": 1, "method": "tools/call",
+                "params": {"name": "get_context_status", "arguments": {}}
+            }) + "\n"
+            result = subprocess.run(
+                [str(SERVER_SH)],
+                input=msg,
+                capture_output=True,
+                text=True,
+                timeout=10,
+                env=env,
+            )
+            response = json.loads(result.stdout.strip().splitlines()[0])
+            payload = json.loads(response["result"]["content"][0]["text"])
+            self.assertEqual(payload["usage_percent"], 33)
+        finally:
+            shutil.rmtree(temp_dir, ignore_errors=True)
+
+    def test_cli_flag_beats_env_var(self):
+        """--context-file takes precedence over JARPA_CONTEXT_FILE."""
+        temp_dir = tempfile.mkdtemp()
+        try:
+            env_path = os.path.join(temp_dir, "env.json")
+            cli_path = os.path.join(temp_dir, "cli.json")
+            with open(env_path, "w") as f:
+                json.dump({"usage_percent": 11}, f)
+            with open(cli_path, "w") as f:
+                json.dump({"usage_percent": 77}, f)
+            env = os.environ.copy()
+            env["JARPA_CONTEXT_FILE"] = env_path
+            msg = json.dumps({
+                "jsonrpc": "2.0", "id": 1, "method": "tools/call",
+                "params": {"name": "get_context_status", "arguments": {}}
+            }) + "\n"
+            result = subprocess.run(
+                [str(SERVER_SH), "--context-file", cli_path],
+                input=msg,
+                capture_output=True,
+                text=True,
+                timeout=10,
+                env=env,
+            )
+            response = json.loads(result.stdout.strip().splitlines()[0])
+            payload = json.loads(response["result"]["content"][0]["text"])
+            self.assertEqual(payload["usage_percent"], 77)
+        finally:
+            shutil.rmtree(temp_dir, ignore_errors=True)
 
 
 class TestServerBehavior(unittest.TestCase):

@@ -1,20 +1,36 @@
 ---
 name: session-protocol
-description: Session start/end guidance for JARPA workflow
-when-to-trigger: |
-  Trigger this agent when:
-  - Session starts (SessionStart hook)
-  - Session ends (SessionEnd/Stop hook)
-  - User asks about session protocol
-  - Need to present "where are we now" status
-  - Need to guide through session-end documentation
-color: blue
+description: Use this agent when a JARPA session starts or ends, when the user asks for a "where are we now" status, or when end-of-session documentation needs to be written. Examples:
+
+<example>
+Context: SessionStart hook fires at the beginning of a Claude Code session in a JARPA project.
+user: "(session just started)"
+assistant: "I'll use the session-protocol agent to read the JARPA logbook and present the current status."
+<commentary>
+Session start requires reading PROJECT_PLAN.md, TODO.md and JOURNAL.md and validating that the current task scope fits one working session. This agent owns that workflow.
+</commentary>
+</example>
+
+<example>
+Context: The user has finished working and wants to close the session cleanly.
+user: "let's wrap up this session"
+assistant: "I'll launch the session-protocol agent to gather session information and update the JARPA logbook."
+<commentary>
+End-of-session documentation is a multi-step workflow (gather info, append journal entry, update TODO.md, update PROJECT_PLAN.md, check archiving). The agent owns this entire sequence.
+</commentary>
+</example>
+
+<example>
+Context: The user asks where things stand mid-session.
+user: "remind me what we were working on"
+assistant: "Let me invoke the session-protocol agent to summarize the current milestone, active task and recent progress."
+<commentary>
+The agent centralizes reading the JARPA documentation set and producing a concise status summary, so the main conversation doesn't need to reload all the context.
+</commentary>
+</example>
 model: haiku
-allowed-tools:
-  - Read
-  - Edit
-  - AskUserQuestion
-  - Bash
+color: blue
+tools: ["Read", "Edit", "AskUserQuestion", "Bash"]
 ---
 
 # Session Protocol Agent
@@ -169,6 +185,17 @@ Documentation lives in `jarpa/`, archives in `jarpa/archive/`. Session scope tar
 
 ## Context Awareness
 
-During long sessions, periodically suggest checking context status using MCP tools if available.
+The context-monitor MCP server exposes three tools:
+- `get_context_status` — current usage percent and recommendation
+- `should_close_session` — boolean check against a threshold
+- `check_health` — end-to-end diagnosis of the statusline → broker → server pipeline
 
-Monitor context usage via MCP tools. At 75% (warning), recommend planning session closure. At 90% (critical), strongly recommend immediate session-end protocol.
+**At session start**, call `check_health` once. If `overall` is `BROKEN` or
+`DEGRADED`, surface a concise warning to the user and point them to
+`/jarpa:init` (which configures the statusline) or the README's Context
+Monitoring section. Do not retry `get_context_status` until the pipeline is
+healthy — it will just return "no data".
+
+**During long sessions**, monitor context usage via `get_context_status`.
+At 75% (WARNING), recommend planning session closure. At 90% (CRITICAL),
+strongly recommend immediate session-end protocol.
