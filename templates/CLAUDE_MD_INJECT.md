@@ -10,5 +10,13 @@ This project uses JARPA for structured documentation.
 - **Documentation**: Only `jarpa/JOURNAL.md` is cumulative (append-only). All other jarpa/ docs reflect current state.
 - **Session discipline**: Work only on the current task. No scope creep. Surface risks immediately.
 
+### Opt-in Advisory Agents
+
+A read-only agent is available on demand (not triggered by hooks):
+
+- **coherence-validator** — cross-document coherence check across the 5 `jarpa/` files.
+
+Invoke when useful; advisory, never modifies files.
+
 For full methodology, see the jarpa-methodology skill.
 <!-- JARPA:END -->
