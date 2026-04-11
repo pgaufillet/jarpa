@@ -128,7 +128,7 @@ If you skipped auto-configuration, add this to your project's
 | `/jarpa:session-end` | End-of-session documentation (also triggered automatically) |
 | `/jarpa:archive` | Archive older journal entries when JOURNAL.md grows large |
 | `/jarpa:status` | Show current project status |
-| `/jarpa:migrate` | Migrate a legacy JARPA project to the plugin format |
+| `/jarpa:upgrade` | Upgrade consumer jarpa/ files to the current on-disk format |
 | `/jarpa:test-installation` | Verify the plugin is installed correctly |
 
 ## Project Structure

@@ -123,7 +123,7 @@ else
     CMD_OUTPUT=$(cd "$TEST_DIR" && claude --plugin-dir "$PLUGIN_ROOT" --print -p "List all available slash commands that start with 'jarpa'. Just list the command names, one per line." 2>&1) || true
 
     # Check for expected commands
-    EXPECTED_COMMANDS=("jarpa:init" "jarpa:status" "jarpa:archive" "jarpa:session-end" "jarpa:migrate")
+    EXPECTED_COMMANDS=("jarpa:init" "jarpa:status" "jarpa:archive" "jarpa:session-end" "jarpa:upgrade")
     FOUND_COUNT=0
 
     for cmd in "${EXPECTED_COMMANDS[@]}"; do

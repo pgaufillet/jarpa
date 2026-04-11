@@ -25,7 +25,7 @@ The following commands should be available (check /help output or attempt to inv
 - `/jarpa:status`
 - `/jarpa:archive`
 - `/jarpa:session-end`
-- `/jarpa:migrate`
+- `/jarpa:upgrade`
 - `/jarpa:test-installation` (this command)
 
 Report: List which commands are available and which are missing.

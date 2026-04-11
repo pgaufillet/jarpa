@@ -46,17 +46,29 @@ root, report the error and stop — do not search elsewhere.
 
 ### 1. Session Numbering Validation
 
-**Find session headers** (canonical format: `## [YYYY-MM-DD] — Session N: Title`):
+**Step 1 — canonical grep** (canonical format: `## [YYYY-MM-DD] — Session N: Title`):
 ```bash
-grep -E "^## \[[0-9]{4}-[0-9]{2}-[0-9]{2}\]" jarpa/JOURNAL.md
+grep -nE "^## \[[0-9]{4}-[0-9]{2}-[0-9]{2}\]" jarpa/JOURNAL.md
 ```
 
-**Extract session numbers** from the headers above:
+**Step 2 — fallback on zero matches.** If the canonical grep returns nothing but the file clearly contains content (non-zero line count), do NOT declare an empty journal. This almost always means format drift — the headers exist but do not match the canonical regex (e.g., em-dash replaced with hyphen, date bracketed differently, session line split across lines). Instead:
+
+1. Read the full JOURNAL.md with the Read tool.
+2. Semantically identify every session boundary by scanning for H2 lines (`^## `) that plausibly introduce a work session — typically carrying a date, a "Session N" fragment, or a title.
+3. Record each candidate header with its line number, detected session number (if any), detected date (if any), and the raw header text.
+4. Treat this list as the authoritative session inventory for the rest of this run.
+5. Surface a prominent warning in the report: "Canonical grep matched 0 sessions; fell back to semantic extraction. Journal format has drifted from the contract — run /jarpa:upgrade to realign, or fix headers manually." Include the first 3 drifted headers verbatim so the maintainer can see the drift pattern.
+
+The fallback exists to prevent silent data loss: a validator that reports "0 sessions, safe to archive" on a non-empty drifted journal would cause exactly the failure mode archiving is supposed to guard against.
+
+**Step 3 — extract session numbers** from the headers collected above (either via the canonical grep or via the fallback):
 ```bash
 grep -oE "Session [0-9]+" jarpa/JOURNAL.md
 ```
 
-**Parse and validate:**
+If the fallback path was taken, use the semantic extraction from Step 2 instead of the `grep -oE` above — do not re-run a grep that already failed.
+
+**Step 4 — parse and validate:**
 1. Extract all session numbers from the `Session N` substring in each header
 2. Sort session numbers numerically
 3. Check for sequential numbering:

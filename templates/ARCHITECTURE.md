@@ -1,3 +1,4 @@
+<!-- jarpa-format: 1 -->
 # Architecture
 
 ## Overview

@@ -454,7 +454,7 @@ test_commands() {
 
     assert_dir_exists "$PLUGIN_ROOT/commands" "commands/ directory exists"
 
-    local expected_commands=("init" "archive" "session-end" "migrate" "status" "test-installation")
+    local expected_commands=("init" "archive" "session-end" "status" "test-installation" "upgrade")
 
     for cmd in "${expected_commands[@]}"; do
         assert_file_exists "$PLUGIN_ROOT/commands/$cmd.md" "Command $cmd.md exists"

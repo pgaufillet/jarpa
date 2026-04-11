@@ -34,6 +34,7 @@ This command sets up the complete JARPA documentation structure with safe re-run
      - REQUIREMENTS.md
      - ARCHITECTURE.md
      - JOURNAL.md
+   - Each template already carries the `<!-- jarpa-format: 1 -->` marker as its first line. This marker is the single source of truth for `/jarpa:upgrade` — do not strip or rewrite it on copy.
    - If file exists: Skip and inform user (safe re-run)
    - If --force flag provided: Overwrite existing files
 
