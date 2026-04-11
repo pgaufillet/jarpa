@@ -20,14 +20,6 @@ The agent reports gaps, duplicates, missing required sections and out-of-order d
 </commentary>
 </example>
 
-<example>
-Context: A pre-commit policy wants to block commits that corrupt the journal.
-user: "validate the journal before I commit this"
-assistant: "I'll invoke the journal-validator agent for a quick structural check."
-<commentary>
-The agent supports a quick-validation mode (numbering + line count + basic structure) suitable for fast pre-commit enforcement.
-</commentary>
-</example>
 model: sonnet
 color: yellow
 tools: ["Read", "Grep", "Bash"]
@@ -54,13 +46,18 @@ root, report the error and stop — do not search elsewhere.
 
 ### 1. Session Numbering Validation
 
-**Extract session numbers:**
+**Find session headers** (canonical format: `## [YYYY-MM-DD] — Session N: Title`):
 ```bash
-grep -E "^## (Session )?[0-9]+" jarpa/JOURNAL.md
+grep -E "^## \[[0-9]{4}-[0-9]{2}-[0-9]{2}\]" jarpa/JOURNAL.md
+```
+
+**Extract session numbers** from the headers above:
+```bash
+grep -oE "Session [0-9]+" jarpa/JOURNAL.md
 ```
 
 **Parse and validate:**
-1. Extract all session numbers from lines starting with `## Session N:` or `## N:`
+1. Extract all session numbers from the `Session N` substring in each header
 2. Sort session numbers numerically
 3. Check for sequential numbering:
    - No gaps (e.g., 1, 2, 4 → missing 3)
@@ -76,7 +73,7 @@ grep -E "^## (Session )?[0-9]+" jarpa/JOURNAL.md
 ### 2. Session Structure Validation
 
 **Check each session has required sections:**
-- `## [Date] — [Title]` or `## Session N: [Title]` header
+- `## [YYYY-MM-DD] — Session N: Title` header
 - `### Goal` section
 - `### Actions Performed` section
 - `### Results` section
@@ -111,7 +108,7 @@ When validating before archiving:
    ```
 
 2. **Identify session boundaries:**
-   - Find lines starting with `## Session` or `## [date]`
+   - Find lines matching `^## \[[0-9]{4}-[0-9]{2}-[0-9]{2}\]`
    - Count sessions
    - Calculate average lines per session
 
@@ -225,9 +222,7 @@ Documentation lives in `jarpa/`, archives in `jarpa/archive/`.
 Called by:
 - `/jarpa:archive` command before archiving
 - User-requested integrity checks
-- Optional pre-commit hook validation
 
 Reports to:
 - Calling command/agent
 - User via summary report
-- Log file (if configured)

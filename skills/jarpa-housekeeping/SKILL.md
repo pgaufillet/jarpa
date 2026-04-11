@@ -32,7 +32,7 @@ Documentation lives in `jarpa/`, archives in `jarpa/archive/`. Settings use YAML
 **Process:**
 1. Count lines in `jarpa/JOURNAL.md`
 2. If over threshold, identify sessions to archive (keep 5-10 recent sessions)
-3. Find session boundaries (lines starting with `## Session N:`)
+3. Find session boundaries (lines matching `^## \[YYYY-MM-DD\] — Session N: Title`)
 4. **VALIDATE:** Check session numbering is sequential with no gaps
    - Extract all session numbers from JOURNAL.md
    - Verify sequence (e.g., 75, 76, 77... no missing numbers)

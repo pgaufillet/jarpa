@@ -114,7 +114,7 @@ When triggered at session end:
    - Format using JARPA canonical journal structure (kept here because agents run without access to the methodology skill):
      ```markdown
 
-     ## [YYYY-MM-DD] — [Session Title]
+     ## [YYYY-MM-DD] — Session N: Title
 
      ### Goal
      - [Session goal]

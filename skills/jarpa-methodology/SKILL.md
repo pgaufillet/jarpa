@@ -60,7 +60,7 @@ Each action must have: a clear goal, a definition of done, a bounded scope.
 JOURNAL.md is append-only. Canonical entry format:
 
 ```markdown
-## [YYYY-MM-DD] — [Session Title]
+## [YYYY-MM-DD] — Session N: Title
 
 ### Goal
 ### Actions Performed
@@ -70,6 +70,9 @@ JOURNAL.md is append-only. Canonical entry format:
 ### Remaining Work / Next Step
 ### Notes / Risks
 ```
+
+Session numbers are mandatory, sequential, and enforced by journal-validator
+before archiving.
 
 **Archiving:** When JOURNAL.md exceeds the configured threshold (default: 1500 lines),
 archive older sessions to `jarpa/archive/`. Keep 5-10 recent sessions in active file.

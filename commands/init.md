@@ -102,7 +102,7 @@ This command sets up the complete JARPA documentation structure with safe re-run
    Append to jarpa/JOURNAL.md:
    ```markdown
 
-   ## [YYYY-MM-DD] — Initialization
+   ## [YYYY-MM-DD] — Session 1: Initialization
 
    ### Goal
    - Initialize the standard documentation set for "[Project Name]".
