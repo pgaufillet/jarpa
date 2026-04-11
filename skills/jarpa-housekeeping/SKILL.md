@@ -74,10 +74,10 @@ Documentation lives in `jarpa/`, archives in `jarpa/archive/`. Settings use YAML
 ## Task: Update PROJECT_PLAN.md
 
 **At session end:**
-1. Update "Current Sprint" section with progress
+1. Update "Current Step" section with progress
 2. Mark completed deliverables with checkmarks
-3. Update "Tasks in Progress" / "Completed" lists
-4. Add changelog entry if significant progress made
+3. Update milestone status if applicable
+4. Keep the file reflecting current state only (not cumulative)
 
 ## Execution Guidelines
 

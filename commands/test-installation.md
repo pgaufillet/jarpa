@@ -33,8 +33,10 @@ Report: List which commands are available and which are missing.
 ### Test 2: Agents Registered
 
 Check that JARPA agents are available:
-- `session-protocol`
-- `journal-validator`
+- `session-protocol` (session lifecycle)
+- `journal-validator` (journal structure and numbering)
+- `coherence-validator` (cross-document coherence, opt-in)
+- `session-reviewer` (retrospective review, opt-in)
 
 Try to determine if agents are registered (they appear in agent listings or can be invoked via Task tool).
 
@@ -92,7 +94,7 @@ JARPA Installation Test Results
 
 Plugin loaded:     [PASS/FAIL]
 Commands:          [X/6] available
-Agents:            [X/2] registered
+Agents:            [X/4] registered
 Skills:            [X/2] loaded
 MCP Server:        [PASS/FAIL]
 Hooks configured:  [PASS/FAIL]
