@@ -12,11 +12,12 @@ This project uses JARPA for structured documentation.
 
 ### Opt-in Advisory Agents
 
-A read-only agent is available on demand (not triggered by hooks):
+Two read-only agents are available on demand (not triggered by hooks):
 
 - **coherence-validator** — cross-document coherence check across the 5 `jarpa/` files.
+- **session-reviewer** — retrospective pattern review across a window of recent sessions.
 
-Invoke when useful; advisory, never modifies files.
+Invoke either when useful; both are advisory and never modify files.
 
 For full methodology, see the jarpa-methodology skill.
 <!-- JARPA:END -->

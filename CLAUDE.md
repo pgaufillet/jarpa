@@ -13,7 +13,7 @@ Self-apply skills/jarpa-methodology/SKILL.md.
 ```
 .claude-plugin/plugin.json    # Plugin manifest
 commands/                      # Slash commands (jarpa:init, jarpa:status, etc.)
-agents/                        # Sub-agents (session-protocol, journal-validator, coherence-validator)
+agents/                        # Sub-agents (session-protocol, journal-validator, coherence-validator, session-reviewer)
 skills/                        # Skills (jarpa-methodology, jarpa-housekeeping)
 hooks/                         # Hook definitions and scripts
 mcp-servers/                   # MCP server (context-monitor)
