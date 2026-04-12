@@ -68,38 +68,7 @@ This command sets up the complete JARPA documentation structure with safe re-run
    - If CLAUDE.md exists and contains `<!-- JARPA:BEGIN`: skip (already injected)
    - Report action taken: "Created CLAUDE.md with JARPA rules" / "Appended JARPA rules to CLAUDE.md" / "CLAUDE.md already has JARPA rules, skipped"
 
-8. **Offer to configure the JARPA statusline**:
-   The context-monitor MCP server depends on a statusline that writes a broker
-   file on every turn. Without it, `get_context_status` returns no data and
-   proactive context monitoring is inactive.
-
-   - Read the project `.claude/settings.json` (may not exist).
-   - If the file does not exist, propose to create it with the statusline block below.
-   - If it exists and already contains a `statusLine` field pointing to
-     `mcp-servers/context-monitor/statusline.sh`: report "JARPA statusline already configured" and skip.
-   - If it exists and has a different `statusLine`: do NOT overwrite. Report the
-     current value and suggest the user chain both statuslines manually.
-   - If it exists and has no `statusLine`: use AskUserQuestion to offer
-     installing the block.
-
-   Block to install:
-   ```json
-   {
-     "statusLine": {
-       "type": "command",
-       "command": "bash ${CLAUDE_PLUGIN_ROOT}/mcp-servers/context-monitor/statusline.sh"
-     }
-   }
-   ```
-
-   Use Edit (if settings.json exists) or Write (to create it). Never touch
-   `~/.claude/settings.json` — the plugin only configures the project-scoped
-   file.
-
-   Report the outcome: "Statusline configured" / "Statusline already configured" /
-   "Statusline not installed — manual setup required (see README)".
-
-9. **Write initial journal entry** (only if JOURNAL.md was created or overwritten):
+8. **Write initial journal entry** (only if JOURNAL.md was created or overwritten):
    Append to jarpa/JOURNAL.md:
    ```markdown
 
@@ -142,10 +111,9 @@ This command sets up the complete JARPA documentation structure with safe re-run
    - None.
    ```
 
-10. **Report summary**:
+9. **Report summary**:
    - List files created
    - List files skipped (if any)
-   - Statusline configuration outcome
    - Next steps guidance
 
 ## Tools to Use

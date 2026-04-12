@@ -107,13 +107,13 @@ STATUSLINE="$PLUGIN_ROOT/mcp-servers/context-monitor/statusline.sh"
 if [[ ! -f "$STATUSLINE" ]]; then
     fail "statusline.sh not found at $STATUSLINE"
 else
-    if grep -qE "usage_percent\" -ge ${CRITICAL_CANONICAL}" "$STATUSLINE"; then
+    if grep -qE "jarpa_pct\" -ge ${CRITICAL_CANONICAL}" "$STATUSLINE"; then
         pass "statusline.sh uses ${CRITICAL_CANONICAL} as critical label threshold"
     else
         fail "statusline.sh critical label does not match canonical ${CRITICAL_CANONICAL}"
     fi
 
-    if grep -qE "usage_percent\" -ge ${WARNING_CANONICAL}" "$STATUSLINE"; then
+    if grep -qE "jarpa_pct\" -ge ${WARNING_CANONICAL}" "$STATUSLINE"; then
         pass "statusline.sh uses ${WARNING_CANONICAL} as warning label threshold"
     else
         fail "statusline.sh warning label does not match canonical ${WARNING_CANONICAL}"

@@ -10,15 +10,7 @@
 # Claude Code invokes this script on every turn. It must be fast
 # (<100ms) and must never fail in a way that breaks the UI line.
 #
-# Configure in ~/.claude/settings.json:
-#   {
-#     "statusLine": {
-#       "type": "command",
-#       "command": "bash ${CLAUDE_PLUGIN_ROOT}/mcp-servers/context-monitor/statusline.sh"
-#     }
-#   }
-#
-# /jarpa:init offers to install this automatically.
+# Auto-configured in .claude/settings.json by the SessionStart hook.
 #
 # Dependencies: bash only. No jq, no Python.
 #
@@ -54,46 +46,63 @@ payload=$(cat 2>/dev/null || true)
 
 transcript_path=$(json_get_str "$payload" "transcript_path")
 session_id=$(json_get_str "$payload" "session_id")
-model_id=$(json_get_str "$payload" "id")
 cwd=$(json_get_str "$payload" "cwd")
+model_display=$(json_get_str "$payload" "display_name")
+: "${model_display:=$(json_get_str "$payload" "id")}"
 
-# --- Compute context usage percentage ---
+# --- Context usage percentage ---
 #
-# Claude Code does not (yet) expose a precise token count on the statusline
-# payload, so we approximate from the transcript file size.
+# Primary: read context_window.used_percentage and context_window_size from
+# the Claude Code payload (real token counts).
+# Fallback: approximate from transcript file size (4 bytes/token, 200K window)
+# in case a future payload version drops these fields.
+
+usage_percent=$(json_get_num "$payload" "used_percentage")
+context_window_size=$(json_get_num "$payload" "context_window_size")
+
+if [[ -z "$usage_percent" ]]; then
+    # Fallback heuristic
+    : "${context_window_size:=200000}"
+    BYTES_PER_TOKEN=4
+    _path="$transcript_path"
+    if [[ -n "$_path" && -f "$_path" ]]; then
+        _size=$(stat -c %s "$_path" 2>/dev/null || stat -f %z "$_path" 2>/dev/null || echo 0)
+        if [[ "$_size" =~ ^[0-9]+$ ]]; then
+            usage_percent=$(( _size * 100 / (context_window_size * BYTES_PER_TOKEN) ))
+            [[ "$usage_percent" -gt 100 ]] && usage_percent=100
+        else
+            usage_percent=0
+        fi
+    else
+        usage_percent=0
+    fi
+fi
+
+# --- JARPA budget vs model context ---
 #
-# Heuristic: 1 token ~= 4 bytes of transcript JSON on average. Model context
-# windows are normalized to 200K tokens (Sonnet / Opus default). This is
-# deliberately a rough estimate — the goal is to cross the 75/90 thresholds
-# at the right order of magnitude, not to be exact.
+# The JARPA working budget (JARPA_CONTEXT_TOKENS) can be smaller than the
+# model's context window. For example, 250K on a 1M model for efficiency.
 #
-# If you need a tighter measure, override by writing JARPA_CONTEXT_FILE
-# yourself from another tool.
+# - The displayed percentage reflects the model's real context usage so the
+#   user can calibrate their JARPA budget.
+# - The WARN/CRITICAL labels fire based on the JARPA budget, which is what
+#   actually matters for session management.
+#
+# Default budget: model's full context window (no artificial limit).
 
-ASSUMED_CONTEXT_TOKENS=200000
-BYTES_PER_TOKEN=4
+jarpa_budget="${JARPA_CONTEXT_TOKENS:-${context_window_size:-200000}}"
 
-compute_percent() {
-    local path="$1"
-    if [[ -z "$path" || ! -f "$path" ]]; then
-        printf '0'
-        return
-    fi
-    local size
-    size=$(stat -c %s "$path" 2>/dev/null || stat -f %z "$path" 2>/dev/null || echo 0)
-    if ! [[ "$size" =~ ^[0-9]+$ ]]; then
-        printf '0'
-        return
-    fi
-    local budget=$((ASSUMED_CONTEXT_TOKENS * BYTES_PER_TOKEN))
-    local pct=$(( size * 100 / budget ))
-    if [[ "$pct" -gt 100 ]]; then
-        pct=100
-    fi
-    printf '%d' "$pct"
-}
+if [[ -n "$context_window_size" && "$context_window_size" -gt 0 ]]; then
+    used_tokens=$(( usage_percent * context_window_size / 100 ))
+else
+    used_tokens=0
+fi
 
-usage_percent=$(compute_percent "$transcript_path")
+if [[ "$jarpa_budget" -gt 0 ]]; then
+    jarpa_pct=$(( used_tokens * 100 / jarpa_budget ))
+else
+    jarpa_pct=0
+fi
 
 # --- Write broker file atomically ---
 
@@ -108,12 +117,12 @@ write_broker() {
     fi
 }
 
-broker_body="{\"usage_percent\":${usage_percent},\"session_id\":\"${session_id}\",\"transcript_path\":\"${transcript_path}\",\"updated_at\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}"
+broker_body="{\"usage_percent\":${jarpa_pct},\"model_percent\":${usage_percent},\"session_id\":\"${session_id}\",\"transcript_path\":\"${transcript_path}\",\"updated_at\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}"
 write_broker "$CONTEXT_FILE" "$broker_body"
 
 # --- Emit visible status line ---
 #
-# Format: "JARPA <gauge> <pct>% | <cwd_basename>"
+# Format: "<model> · JARPA <gauge> <pct>% ctx <label>"
 # Gauge uses a 10-cell visual bar.
 
 gauge() {
@@ -128,17 +137,12 @@ gauge() {
 }
 
 label=""
-if [[ "$usage_percent" -ge 90 ]]; then
+if [[ "$jarpa_pct" -ge 90 ]]; then
     label="CRITICAL"
-elif [[ "$usage_percent" -ge 75 ]]; then
+elif [[ "$jarpa_pct" -ge 75 ]]; then
     label="WARN"
 else
     label="OK"
 fi
 
-cwd_base=""
-if [[ -n "$cwd" ]]; then
-    cwd_base=$(basename "$cwd")
-fi
-
-printf 'JARPA %s %d%% %s | %s\n' "$(gauge "$usage_percent")" "$usage_percent" "$label" "$cwd_base"
+printf '%s · JARPA %s %d%% ctx %s\n' "$model_display" "$(gauge "$usage_percent")" "$usage_percent" "$label"

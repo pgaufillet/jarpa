@@ -210,10 +210,9 @@ The context-monitor MCP server exposes three tools:
 - `check_health` — end-to-end diagnosis of the statusline → broker → server pipeline
 
 **At session start**, call `check_health` once. If `overall` is `BROKEN` or
-`DEGRADED`, surface a concise warning to the user and point them to
-`/jarpa:init` (which configures the statusline) or the README's Context
-Monitoring section. Do not retry `get_context_status` until the pipeline is
-healthy — it will just return "no data".
+`DEGRADED`, surface a concise warning to the user and point them to the
+README's Context Monitoring section. Do not retry `get_context_status` until
+the pipeline is healthy — it will just return "no data".
 
 **During long sessions**, monitor context usage via `get_context_status`.
 At 75% (WARNING), recommend planning session closure. At 90% (CRITICAL),

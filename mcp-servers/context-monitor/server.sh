@@ -101,7 +101,7 @@ respond_error() {
 # --- MCP handlers ---
 
 handle_initialize() {
-    respond_result "$1" '{"protocolVersion":"2024-11-05","capabilities":{"tools":{}},"serverInfo":{"name":"context-monitor","version":"0.2.0"}}'
+    respond_result "$1" '{"protocolVersion":"2024-11-05","capabilities":{"tools":{}},"serverInfo":{"name":"context-monitor","version":"0.2.1"}}'
 }
 
 handle_tools_list() {
@@ -113,7 +113,7 @@ handle_get_context_status() {
     local id="$1"
 
     if [[ ! -f "$CONTEXT_FILE" ]]; then
-        respond_tool_text "$id" "{\"error\":\"No context data available\",\"context_file\":\"$(json_escape "$CONTEXT_FILE")\",\"suggestion\":\"Run /jarpa:init to configure the statusline, or call check_health for diagnostics\"}"
+        respond_tool_text "$id" "{\"error\":\"No context data available\",\"context_file\":\"$(json_escape "$CONTEXT_FILE")\",\"suggestion\":\"The statusline is auto-configured on session start. Call check_health for diagnostics.\"}"
         return
     fi
 

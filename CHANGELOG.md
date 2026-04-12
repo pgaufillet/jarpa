@@ -7,13 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-Upcoming `0.2.0` — all changes since `0.1.0`.
+## [0.2.1] — 2026-04-12
+
+### Fixed
+
+- **Statusline now shows accurate context usage.** The percentage is read
+  from Claude Code's real `context_window.used_percentage` instead of a
+  rough transcript-size heuristic. Fallback heuristic retained for
+  forward-compatibility.
+- **Model name displayed in statusline.** Format is now
+  `<model> · JARPA <gauge> <pct>% ctx <label>`.
+- **JARPA context budget decoupled from model window.** Set
+  `JARPA_CONTEXT_TOKENS` (e.g., `250000`) to trigger warnings before the
+  full model context is exhausted. The displayed percentage still reflects
+  the model's real usage so the user can calibrate the budget.
+- **Statusline auto-configured on first session start.** No longer requires
+  `/jarpa:init` or manual setup — the SessionStart hook installs it in
+  `.claude/settings.json` automatically.
+
+## [0.2.0] — 2026-04-11
 
 ### Added
 
-- **Context-window monitoring.** A new statusline shows live context usage
-  with warning/critical thresholds. `/jarpa:init` offers to install it
-  automatically.
+- **Context-window monitoring.** A statusline shows live context usage
+  with warning/critical thresholds.
 - **`/jarpa:init` now seeds your project's `CLAUDE.md`** with the core JARPA
   rules.
 - **`/jarpa:upgrade` command.** Upgrades your project's `jarpa/` files when
