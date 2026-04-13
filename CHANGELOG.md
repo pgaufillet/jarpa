@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.2] — 2026-04-13
+
+### Fixed
+
+- **Statusline percentage was reading the rate-limit value, not context
+  usage.** The payload exposes `used_percentage` under both
+  `context_window` and `rate_limits.*`, and the greedy JSON extraction
+  picked the last match. Two side effects: the displayed percentage was
+  wrong (e.g., 16% instead of 3%), and all sessions on the same account
+  showed the same value because rate limits are global. The payload is
+  now trimmed before `rate_limits` to scope the extraction to
+  `context_window`.
+
 ## [0.2.1] — 2026-04-12
 
 ### Fixed

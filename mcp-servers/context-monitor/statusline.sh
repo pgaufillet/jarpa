@@ -56,9 +56,14 @@ model_display=$(json_get_str "$payload" "display_name")
 # the Claude Code payload (real token counts).
 # Fallback: approximate from transcript file size (4 bytes/token, 200K window)
 # in case a future payload version drops these fields.
+#
+# The payload also exposes rate_limits.*.used_percentage. Strip it first so
+# our greedy sed extraction picks the context_window value, not the rate
+# limit. Same precaution for context_window_size.
 
-usage_percent=$(json_get_num "$payload" "used_percentage")
-context_window_size=$(json_get_num "$payload" "context_window_size")
+context_payload="${payload%%\"rate_limits\"*}"
+usage_percent=$(json_get_num "$context_payload" "used_percentage")
+context_window_size=$(json_get_num "$context_payload" "context_window_size")
 
 if [[ -z "$usage_percent" ]]; then
     # Fallback heuristic

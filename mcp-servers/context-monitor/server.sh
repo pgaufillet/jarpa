@@ -101,7 +101,7 @@ respond_error() {
 # --- MCP handlers ---
 
 handle_initialize() {
-    respond_result "$1" '{"protocolVersion":"2024-11-05","capabilities":{"tools":{}},"serverInfo":{"name":"context-monitor","version":"0.2.1"}}'
+    respond_result "$1" '{"protocolVersion":"2024-11-05","capabilities":{"tools":{}},"serverInfo":{"name":"context-monitor","version":"0.2.2"}}'
 }
 
 handle_tools_list() {
