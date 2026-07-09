@@ -8,7 +8,7 @@
 SETTINGS="${CLAUDE_PROJECT_DIR:-.}/.claude/settings.json"
 # Resolved path — ${CLAUDE_PLUGIN_ROOT} is NOT expanded in settings.json,
 # so we must write the full path and refresh it on every session start.
-STATUSLINE_SCRIPT="${CLAUDE_PLUGIN_ROOT}/mcp-servers/context-monitor/statusline.sh"
+STATUSLINE_SCRIPT="${CLAUDE_PLUGIN_ROOT}/statusline/statusline.sh"
 STATUSLINE_CMD="bash ${STATUSLINE_SCRIPT}"
 ESCAPED_CMD=$(printf '%s' "$STATUSLINE_CMD" | sed 's/[&/\]/\\&/g')
 

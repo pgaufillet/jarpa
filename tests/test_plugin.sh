@@ -303,7 +303,7 @@ test_statusline() {
 
     # The context-monitor MCP server was removed in 0.3.0; the statusline is
     # now the only context-monitoring artifact the plugin ships.
-    local statusline="$PLUGIN_ROOT/mcp-servers/context-monitor/statusline.sh"
+    local statusline="$PLUGIN_ROOT/statusline/statusline.sh"
     assert_file_exists "$statusline" "statusline.sh exists"
     assert_executable "$statusline" "statusline.sh is executable"
     assert_shell_syntax "$statusline" "statusline.sh has valid syntax"

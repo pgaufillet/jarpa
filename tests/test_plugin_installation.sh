@@ -145,7 +145,7 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 
 # The context-monitor MCP server was removed in 0.3.0; the statusline is the
 # only context-monitoring artifact the plugin ships.
-if [[ -x "$PLUGIN_ROOT/mcp-servers/context-monitor/statusline.sh" ]]; then
+if [[ -x "$PLUGIN_ROOT/statusline/statusline.sh" ]]; then
     log_pass "statusline.sh present and executable"
 else
     log_fail "statusline.sh missing or not executable"

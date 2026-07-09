@@ -115,7 +115,7 @@ JOURNAL.md: [N] lines (threshold: [M])[ — archiving recommended]
 
 ## Context-Awareness Thresholds
 
-Canonical, in sync with `mcp-servers/context-monitor/statusline.sh`:
+Canonical, in sync with `statusline/statusline.sh`:
 
 - At 75% (WARNING), suggest planning session closure.
 - At 90% (CRITICAL), strongly recommend immediate `/jarpa:session-end`.

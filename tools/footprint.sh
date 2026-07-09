@@ -58,7 +58,7 @@ print_group "Agents" "agents"
 print_group "Skills" "skills"
 print_group "Hooks" "hooks"
 print_group "Templates" "templates"
-print_group "Statusline" "mcp-servers"
+print_group "Statusline" "statusline"
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 printf "  %-55s %6d\n" "TOTAL PLUGIN FOOTPRINT" "$total_words"

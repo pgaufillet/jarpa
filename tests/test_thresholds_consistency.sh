@@ -13,7 +13,7 @@
 #   - skills/jarpa-methodology/SKILL.md
 #   - commands/session-start.md
 #   - commands/session-end.md
-#   - mcp-servers/context-monitor/statusline.sh
+#   - statusline/statusline.sh
 #
 
 set -uo pipefail
@@ -82,7 +82,7 @@ done
 
 # --- Check 3: statusline.sh emits the same thresholds in its label logic ---
 
-STATUSLINE="$PLUGIN_ROOT/mcp-servers/context-monitor/statusline.sh"
+STATUSLINE="$PLUGIN_ROOT/statusline/statusline.sh"
 if [[ ! -f "$STATUSLINE" ]]; then
     fail "statusline.sh not found at $STATUSLINE"
 else
