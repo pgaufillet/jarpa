@@ -89,42 +89,6 @@ fi
 
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo " MCP Server Tests"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-
-# Test MCP server can start
-MCP_SERVER="$PLUGIN_ROOT/mcp-servers/context-monitor/server.py"
-if [[ -f "$MCP_SERVER" ]]; then
-    # Try to import and check syntax
-    if python3 -c "import sys; sys.path.insert(0, '$(dirname "$MCP_SERVER")'); exec(open('$MCP_SERVER').read().split('if __name__')[0])" 2>/dev/null; then
-        log_pass "MCP server Python syntax valid"
-    else
-        # Check if it's just missing mcp module
-        if python3 -c "from mcp.server.fastmcp import FastMCP" 2>/dev/null; then
-            log_pass "MCP FastMCP module available"
-        else
-            log_skip "MCP server needs 'mcp' package (pip install mcp)"
-        fi
-    fi
-
-    # Test server can be invoked (will fail fast if broken)
-    log_info "Testing MCP server startup (5s timeout)..."
-    if timeout 5 python3 "$MCP_SERVER" --help 2>/dev/null; then
-        log_pass "MCP server responds to --help"
-    else
-        # Server doesn't have --help, try starting it briefly
-        if timeout 2 python3 "$MCP_SERVER" 2>&1 | head -1 | grep -q "Error\|Traceback"; then
-            log_fail "MCP server has startup errors"
-        else
-            log_pass "MCP server starts without immediate errors"
-        fi
-    fi
-else
-    log_fail "MCP server file not found: $MCP_SERVER"
-fi
-
-echo ""
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo " Hook Script Tests"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
@@ -166,18 +130,6 @@ for ref in $script_refs; do
     fi
 done
 
-# Check .mcp.json paths resolve
-mcp_json="$PLUGIN_ROOT/.mcp.json"
-mcp_refs=$(jq -r '.. | strings' "$mcp_json" 2>/dev/null | grep '\${CLAUDE_PLUGIN_ROOT}' | sed "s|\${CLAUDE_PLUGIN_ROOT}|$PLUGIN_ROOT|g")
-
-for ref in $mcp_refs; do
-    if [[ -f "$ref" ]]; then
-        log_pass "MCP path resolves: $(basename "$ref")"
-    else
-        log_fail "MCP path not found: $ref"
-    fi
-done
-
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo " Interactive Test Instructions"
@@ -198,10 +150,6 @@ echo -e "   ${BLUE}/jarpa:test-installation${NC}"
 echo ""
 echo "4. Test SessionStart hook (start new session):"
 echo "   - Hook should trigger /jarpa:status automatically"
-echo ""
-echo -e "5. Check MCP server:"
-echo -e "   ${BLUE}/mcp${NC}"
-echo "   Look for: context-monitor server"
 echo ""
 
 # Summary

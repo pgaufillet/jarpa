@@ -24,6 +24,7 @@ The following commands should be available (check /help output or attempt to inv
 - `/jarpa:init`
 - `/jarpa:status`
 - `/jarpa:archive`
+- `/jarpa:session-start`
 - `/jarpa:session-end`
 - `/jarpa:upgrade`
 - `/jarpa:test-installation` (this command)
@@ -33,10 +34,14 @@ Report: List which commands are available and which are missing.
 ### Test 2: Agents Registered
 
 Check that JARPA agents are available:
-- `session-protocol` (session lifecycle)
 - `journal-validator` (journal structure and numbering)
 - `coherence-validator` (cross-document coherence, opt-in)
 - `session-reviewer` (retrospective review, opt-in)
+
+Sub-agents in JARPA are reserved for autonomous reviews; the session
+lifecycle (start/end) runs inline in the main agent via the
+`/jarpa:session-start` and `/jarpa:session-end` commands, not through a
+sub-agent.
 
 Try to determine if agents are registered (they appear in agent listings or can be invoked via Task tool).
 
@@ -48,13 +53,13 @@ Check that JARPA skills are available:
 
 Skills should be loadable and their content accessible.
 
-### Test 4: MCP Server Status
+### Test 4: Statusline Configuration
 
-Run `/mcp` to check MCP server status. Look for:
-- `context-monitor` server should be listed
-- Server should show as "connected" or available
+Check that the JARPA statusline is wired in the project's
+`.claude/settings.json` (`statusLine.command` pointing at `statusline.sh`).
+The SessionStart hook installs it automatically on first run.
 
-If the server is not listed or has errors, report the issue.
+If the statusline is missing, report the issue.
 
 ### Test 5: Hook Configuration
 
@@ -93,8 +98,8 @@ JARPA Installation Test Results
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Plugin loaded:     [PASS/FAIL]
-Commands:          [X/6] available
-Agents:            [X/4] registered
+Commands:          [X/7] available
+Agents:            [X/3] registered
 Skills:            [X/2] loaded
 MCP Server:        [PASS/FAIL]
 Hooks configured:  [PASS/FAIL]

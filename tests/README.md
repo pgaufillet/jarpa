@@ -24,7 +24,7 @@ Validates plugin files and configurations without requiring Claude Code.
 **What it tests:**
 - **Manifest**: `plugin.json` validity and required fields
 - **Hooks**: `hooks.json` schema, hook types, script paths
-- **MCP**: `.mcp.json` configuration, server definition
+- **Statusline**: `statusline.sh` presence, executability, and syntax
 - **Agents**: YAML frontmatter, required fields (name, description, model, color)
 - **Commands**: YAML frontmatter, name format (`jarpa:<name>`)
 - **Skills**: SKILL.md structure and metadata
@@ -46,30 +46,10 @@ Validates plugin files and configurations without requiring Claude Code.
 ./tests/test_plugin.sh integration  # Just integration tests
 ```
 
-### 2. MCP Server Tests (`test_mcp_server.py`)
-
-Python unit tests for the context-monitor MCP server.
-
-**What it tests:**
-- Server module can be parsed/imported
-- Context file format expectations
-- Threshold logic (OK/WARNING/CRITICAL)
-- `should_close_session` behavior with custom thresholds
-- Error handling (missing file, malformed JSON)
-- Output format compliance
-- Configuration (file paths, transport mode)
-
-**Run individually:**
-```bash
-python3 tests/test_mcp_server.py      # All tests
-python3 tests/test_mcp_server.py -v   # Verbose output
-```
-
 ## Requirements
 
 - **bash** (for shell tests)
 - **jq** (for JSON validation) - `apt install jq`
-- **python3** (for Python tests)
 
 ## CI/CD Integration
 
@@ -137,19 +117,7 @@ assert_shell_syntax "$file" "Description"
 assert_contains "$file" "pattern" "Description"
 ```
 
-### Adding MCP server tests
-
-Add test methods to the appropriate class in `test_mcp_server.py`:
-
-```python
-class TestContextMonitorServer(unittest.TestCase):
-    def test_new_feature(self):
-        """Test description."""
-        # Test implementation
-        self.assertTrue(condition)
-```
-
-### 3. Installation Tests (`test_plugin_installation.sh`)
+### 2. Installation Tests (`test_plugin_installation.sh`)
 
 **Requires:** Claude Code CLI installed
 
@@ -158,7 +126,6 @@ Tests actual plugin installation by invoking Claude Code with `--plugin-dir`:
 **What it tests:**
 - Plugin loads without errors
 - Commands are registered (`/jarpa:init`, `/jarpa:status`, etc.)
-- MCP server is recognized
 - Plugin metadata is correct
 - Hooks configuration is valid
 - Templates are present
@@ -174,5 +141,4 @@ This test creates a temporary directory and invokes Claude Code with prompts to 
 
 - [ ] Hook execution simulation tests (trigger SessionStart, etc.)
 - [ ] End-to-end workflow tests (`/jarpa:init` → work → `/jarpa:session-end`)
-- [ ] Performance benchmarks for MCP server
 - [ ] CI/CD integration with Claude Code in Docker

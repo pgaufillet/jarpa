@@ -2,7 +2,7 @@
 #
 # JARPA Plugin - Run All Tests
 #
-# Runs plugin validation, Python unit tests, and optionally installation tests.
+# Runs plugin validation, threshold checks, and optionally installation tests.
 #
 # Usage:
 #   ./tests/run_all_tests.sh           # Structure + unit tests only
@@ -40,9 +40,9 @@ echo "╚═══════════════════════�
 echo ""
 
 FAILED=0
-TOTAL_SUITES=3
+TOTAL_SUITES=2
 if $FULL_TESTS; then
-    TOTAL_SUITES=4
+    TOTAL_SUITES=3
 fi
 
 # Test 1: Plugin Structure Tests (shell)
@@ -61,24 +61,9 @@ echo ""
 echo "────────────────────────────────────────────────────────────────"
 echo ""
 
-# Test 2: MCP Server Tests (Python)
-echo -e "${BLUE}[2/$TOTAL_SUITES]${NC} Running MCP server unit tests..."
-echo ""
-if python3 "$SCRIPT_DIR/test_mcp_server.py" ${VERBOSE:+-v}; then
-    echo ""
-    echo -e "${GREEN}✓ MCP server tests passed${NC}"
-else
-    echo ""
-    echo -e "${RED}✗ MCP server tests failed${NC}"
-    FAILED=1
-fi
 
-echo ""
-echo "────────────────────────────────────────────────────────────────"
-echo ""
-
-# Test 3: Threshold consistency (anti-drift)
-echo -e "${BLUE}[3/$TOTAL_SUITES]${NC} Running threshold consistency checks..."
+# Test 2: Threshold consistency (anti-drift)
+echo -e "${BLUE}[2/$TOTAL_SUITES]${NC} Running threshold consistency checks..."
 echo ""
 if "$SCRIPT_DIR/test_thresholds_consistency.sh"; then
     echo ""
@@ -89,12 +74,12 @@ else
     FAILED=1
 fi
 
-# Test 4: Installation Tests (requires Claude CLI)
+# Test 3: Installation Tests (requires Claude CLI)
 if $FULL_TESTS; then
     echo ""
     echo "────────────────────────────────────────────────────────────────"
     echo ""
-    echo -e "${BLUE}[4/$TOTAL_SUITES]${NC} Running Claude Code installation tests..."
+    echo -e "${BLUE}[3/$TOTAL_SUITES]${NC} Running Claude Code installation tests..."
     echo ""
 
     if command -v claude &>/dev/null; then

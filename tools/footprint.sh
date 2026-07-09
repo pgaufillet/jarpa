@@ -58,7 +58,7 @@ print_group "Agents" "agents"
 print_group "Skills" "skills"
 print_group "Hooks" "hooks"
 print_group "Templates" "templates"
-print_group "MCP Server" "mcp-servers"
+print_group "Statusline" "mcp-servers"
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 printf "  %-55s %6d\n" "TOTAL PLUGIN FOOTPRINT" "$total_words"
@@ -71,7 +71,8 @@ echo ""
 
 session_words=0
 session_files=(
-    "$PLUGIN_ROOT/agents/session-protocol.md"
+    "$PLUGIN_ROOT/commands/session-start.md"
+    "$PLUGIN_ROOT/commands/session-end.md"
     "$PLUGIN_ROOT/skills/jarpa-methodology/SKILL.md"
 )
 

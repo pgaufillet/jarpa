@@ -43,10 +43,10 @@ cheap guardrail against a recurring and dangerous failure mode.
 ```
 .claude-plugin/plugin.json    # Plugin manifest
 commands/                      # Slash commands (jarpa:init, jarpa:status, etc.)
-agents/                        # Sub-agents (session-protocol, journal-validator, coherence-validator, session-reviewer)
+agents/                        # Sub-agents (journal-validator, coherence-validator, session-reviewer) — reserved for autonomous reviews; synchronous workflows run inline in commands/
 skills/                        # Skills (jarpa-methodology, jarpa-housekeeping)
 hooks/                         # Hook definitions and scripts
-mcp-servers/                   # MCP server (context-monitor)
+mcp-servers/                   # Statusline (context-monitor/statusline.sh; legacy dir name, no MCP server)
 templates/                     # Template files for /jarpa:init
 tests/                         # Automated test suite
 jarpa/                         # JARPA logbook (gitignored, local working docs)

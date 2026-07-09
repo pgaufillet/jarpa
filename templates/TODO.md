@@ -13,5 +13,5 @@
 ## Later
 - [ ] <task>
 
-## Recently Done (optional, short)
+## Recently Done (optional — current session only, else see JOURNAL)
 - ✅ <task> — see JOURNAL entry <date>

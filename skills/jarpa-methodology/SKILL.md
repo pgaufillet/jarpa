@@ -14,9 +14,8 @@ A structured documentation methodology for AI-assisted software engineering.
 
 ## Role
 
-You are an engineering assistant, acting with discipline and focus.
-Your primary responsibility is to help deliver the project while
-maintaining clear, structured, and up-to-date documentation.
+An engineering assistant acting with discipline and focus: deliver the
+project while keeping documentation clear, structured, and up-to-date.
 
 ## The Logbook Files
 
@@ -47,6 +46,8 @@ Each action must have: a clear goal, a definition of done, a bounded scope.
 - Never invent or modify the plan silently.
 - If the plan needs changes, propose explicitly and apply only after agreement.
 - PROJECT_PLAN.md must indicate: milestones, ordered steps, current step (emphasized).
+- Current-state only: no per-session progress narrative. A milestone carries a
+  one-line status, not a running log. Completed-work detail lives in JOURNAL.
 
 ## Todo List Management
 
@@ -54,6 +55,8 @@ Each action must have: a clear goal, a definition of done, a bounded scope.
 - Organize into: Now (current session), Next, Later.
 - Mark current task with [ONGOING]. Use `[ ]` pending, `[X]` completed.
 - Each item must include a definition of done.
+- Prune on completion: drop finished items (their record lives in JOURNAL).
+  Keep at most a short "Recently Done" for the current session only.
 
 ## Journal (Cumulative)
 
@@ -73,6 +76,10 @@ JOURNAL.md is append-only. Canonical entry format:
 
 Session numbers are mandatory, sequential, and enforced by journal-validator
 before archiving.
+
+**Keep entries lean — target 50-100 lines.** Write only what a future session
+needs: Changes Made summarizes (don't enumerate every file); Technical Decisions
+records only the non-obvious; fold Notes/Risks into Remaining Work when thin.
 
 **Archiving:** When JOURNAL.md exceeds the configured threshold (default: 1500 lines),
 archive older sessions to `jarpa/archive/`. Keep 5-10 recent sessions in active file.
@@ -102,18 +109,13 @@ archive older sessions to `jarpa/archive/`. Keep 5-10 recent sessions in active 
 
 ## Context Management
 
-The assistant has access to `get_context_status` and `should_close_session`
-MCP tools. Use these periodically during long sessions.
+The JARPA statusline surfaces context-window usage every turn; watch its gauge
+during long sessions.
 
-At warning threshold (75%), plan session closure. At critical threshold (90%), stop gracefully:
-1. Complete or checkpoint current atomic step.
-2. Inform user and recommend closing session.
-3. Follow End of Session protocol.
-4. Document in JOURNAL.md: accomplishments, in-progress state, next steps.
-5. Ensure TODO.md has clear next task with sufficient context.
-
-**Important**: Proactively monitor context. Prefer clean session boundaries
-over compacted conversations.
+At warning threshold (75%), plan session closure. At critical threshold (90%),
+stop gracefully: checkpoint the current atomic step, follow the End of Session
+protocol, and ensure TODO.md carries a clear next task with enough context.
+Prefer clean session boundaries over compacted conversations.
 
 ## Conflict Resolution
 
@@ -140,25 +142,14 @@ Examples: "Add user authentication", "Fix login crash on empty password"
 
 ## Test Quality Standards
 
-### Test Integrity (MANDATORY)
+**No dummy or placeholder tests.** Every test must set up a specific state,
+act, verify against expected behavior, and be able to fail. Prohibited: hardcoded
+`return 0`, functions that only print "PASS", tests that pass regardless of state,
+commented-out assertions. A test that cannot fail is technical debt that hides
+bugs and erodes trust.
 
-**No dummy or placeholder tests.** Every test must perform actual verification.
-
-**Prohibited patterns:**
-- Hardcoded `test_result 0` or `return 0` without actual verification
-- Empty test functions or functions that only print "PASS"
-- Tests that always succeed regardless of system state
-- Commented-out assertions with placeholder pass
-
-**Every test must:**
-1. Set up a specific condition or state
-2. Perform an action or query
-3. Verify the result against expected behavior
-4. Fail if the verification fails
-
-**Rationale:** Dummy tests provide false confidence in code quality and can hide real bugs. A test that cannot fail is not a test - it's technical debt that erodes trust in the test suite.
-
-**If a test cannot be implemented:** Mark it as `SKIP` with a clear reason, not as `PASS`. Document in TODO.md what's needed to implement it properly.
+If a test cannot be implemented, mark it `SKIP` with a reason (never `PASS`) and
+note in TODO.md what's needed.
 
 ## Journal Integrity
 

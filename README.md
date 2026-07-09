@@ -80,24 +80,18 @@ Add to `~/.claude/settings.json`:
 
 ## Context Monitoring
 
-JARPA ships a Claude Code statusline that powers proactive context-window
-monitoring. The pipeline has three stages:
+JARPA ships a Claude Code statusline that surfaces context-window usage
+proactively. On every turn it reads Claude Code's own context telemetry and
+renders a gauge in your status line:
 
 ```
-Claude Code turn
-      │
-      ▼
-statusline.sh ──writes──▶ jarpa-context.json ──reads──▶ server.sh (MCP)
-      │                        (broker file)                 │
-      ▼                                                       ▼
-Visible status line                              get_context_status
-with gauge + %                                  should_close_session
-                                                    check_health
+<model> · JARPA ███░░░░░░░ 28% ctx OK
 ```
 
 - **Auto-configuration**: The statusline is installed automatically in your
   project's `.claude/settings.json` on the first session start. Existing
-  statuslines are never overwritten.
+  statuslines are never overwritten, and the path self-heals on each session
+  start via the SessionStart hook.
 - **Thresholds**: 75% = WARNING (plan to close session), 90% = CRITICAL
   (close now). Thresholds are evaluated against the JARPA context budget,
   not the model's full context window.
@@ -105,12 +99,9 @@ with gauge + %                                  should_close_session
   window. Set `JARPA_CONTEXT_TOKENS` to a lower value (e.g., `250000`) to
   trigger warnings earlier — useful with large-context models where
   efficiency degrades well before the window is full.
-- **Broker file path**: `${XDG_RUNTIME_DIR:-${TMPDIR:-/tmp}}/jarpa-context.json`
-  by default. Override with `JARPA_CONTEXT_FILE` if needed.
 
-If `get_context_status` reports no data, call `check_health` via the MCP
-server for an end-to-end diagnosis of the pipeline (file presence,
-staleness, statusline script status).
+Watch the gauge to decide when to wrap up: at WARNING plan closure, at
+CRITICAL run `/jarpa:session-end`.
 
 ## Commands
 

@@ -10,9 +10,9 @@
 # Canonical source: jarpa/ARCHITECTURE.md "Canonical Values" table.
 #
 # Consumers checked by this test:
-#   - mcp-servers/context-monitor/server.sh
 #   - skills/jarpa-methodology/SKILL.md
-#   - agents/session-protocol.md
+#   - commands/session-start.md
+#   - commands/session-end.md
 #   - mcp-servers/context-monitor/statusline.sh
 #
 
@@ -39,31 +39,7 @@ pass() {
     printf '%b✓%b %s\n' "$GREEN" "$NC" "$1"
 }
 
-# --- Check 1: server.sh has the exact canonical values ---
-
-SERVER="$PLUGIN_ROOT/mcp-servers/context-monitor/server.sh"
-if [[ ! -f "$SERVER" ]]; then
-    fail "server.sh not found at $SERVER"
-else
-    warning_line=$(grep -E '^THRESHOLD_WARNING=[0-9]+' "$SERVER" || true)
-    critical_line=$(grep -E '^THRESHOLD_CRITICAL=[0-9]+' "$SERVER" || true)
-    warning_val=${warning_line#THRESHOLD_WARNING=}
-    critical_val=${critical_line#THRESHOLD_CRITICAL=}
-
-    if [[ "$warning_val" == "$WARNING_CANONICAL" ]]; then
-        pass "server.sh THRESHOLD_WARNING=$WARNING_CANONICAL"
-    else
-        fail "server.sh THRESHOLD_WARNING is '$warning_val' (expected $WARNING_CANONICAL)"
-    fi
-
-    if [[ "$critical_val" == "$CRITICAL_CANONICAL" ]]; then
-        pass "server.sh THRESHOLD_CRITICAL=$CRITICAL_CANONICAL"
-    else
-        fail "server.sh THRESHOLD_CRITICAL is '$critical_val' (expected $CRITICAL_CANONICAL)"
-    fi
-fi
-
-# --- Check 2: methodology skill mentions both canonical values ---
+# --- Check 1: methodology skill mentions both canonical values ---
 
 SKILL="$PLUGIN_ROOT/skills/jarpa-methodology/SKILL.md"
 if [[ ! -f "$SKILL" ]]; then
@@ -82,26 +58,29 @@ else
     fi
 fi
 
-# --- Check 3: session-protocol agent mentions both canonical values ---
+# --- Check 2: session-start and session-end commands mention both canonical values ---
 
-AGENT="$PLUGIN_ROOT/agents/session-protocol.md"
-if [[ ! -f "$AGENT" ]]; then
-    fail "session-protocol agent not found at $AGENT"
-else
-    if grep -qE "At ${WARNING_CANONICAL}% \(WARNING\)" "$AGENT"; then
-        pass "session-protocol agent references ${WARNING_CANONICAL}% warning"
-    else
-        fail "session-protocol agent is missing 'At ${WARNING_CANONICAL}% (WARNING)' reference"
+for cmd_rel in commands/session-start.md commands/session-end.md; do
+    CMD="$PLUGIN_ROOT/$cmd_rel"
+    if [[ ! -f "$CMD" ]]; then
+        fail "$cmd_rel not found at $CMD"
+        continue
     fi
 
-    if grep -qE "At ${CRITICAL_CANONICAL}% \(CRITICAL\)" "$AGENT"; then
-        pass "session-protocol agent references ${CRITICAL_CANONICAL}% critical"
+    if grep -qE "At ${WARNING_CANONICAL}% \(WARNING\)" "$CMD"; then
+        pass "$cmd_rel references ${WARNING_CANONICAL}% warning"
     else
-        fail "session-protocol agent is missing 'At ${CRITICAL_CANONICAL}% (CRITICAL)' reference"
+        fail "$cmd_rel is missing 'At ${WARNING_CANONICAL}% (WARNING)' reference"
     fi
-fi
 
-# --- Check 4: statusline.sh emits the same thresholds in its label logic ---
+    if grep -qE "At ${CRITICAL_CANONICAL}% \(CRITICAL\)" "$CMD"; then
+        pass "$cmd_rel references ${CRITICAL_CANONICAL}% critical"
+    else
+        fail "$cmd_rel is missing 'At ${CRITICAL_CANONICAL}% (CRITICAL)' reference"
+    fi
+done
+
+# --- Check 3: statusline.sh emits the same thresholds in its label logic ---
 
 STATUSLINE="$PLUGIN_ROOT/mcp-servers/context-monitor/statusline.sh"
 if [[ ! -f "$STATUSLINE" ]]; then
@@ -120,7 +99,7 @@ else
     fi
 fi
 
-# --- Check 5: ARCHITECTURE.md Canonical Values table matches ---
+# --- Check 4: ARCHITECTURE.md Canonical Values table matches ---
 
 ARCH="$PLUGIN_ROOT/jarpa/ARCHITECTURE.md"
 if [[ -f "$ARCH" ]]; then

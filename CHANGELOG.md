@@ -5,7 +5,31 @@ All notable changes to the JARPA plugin are recorded here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.3.0] — 2026-07-09
+
+### Removed
+
+- **Context-monitor MCP server.** The `context-monitor` MCP server (tools
+  `get_context_status`, `should_close_session`, `check_health`) and its
+  `.mcp.json` declaration are removed. Its tool definitions and every tool
+  result stayed resident in the session context, and the methodology nudged
+  periodic polling — a large, recurring token cost that duplicated
+  information already shown by the JARPA statusline and surfaced by Claude
+  Code's own context warnings. Context awareness now relies on the
+  statusline gauge alone. Session-start no longer runs a health check or
+  polls context usage. Tests covering the MCP server were removed
+  accordingly.
+- **Statusline broker file.** With the MCP server gone, nothing reads the
+  `jarpa-context.json` broker file, so `statusline.sh` no longer writes it
+  (and the `JARPA_CONTEXT_FILE` override is gone). The visible gauge is
+  computed directly from the Claude Code payload; nothing you see changes.
+
+### Changed
+
+- **Leaner documentation discipline.** The methodology now targets 50-100-line
+  JOURNAL entries, keeps PROJECT_PLAN free of per-session progress narrative,
+  and prunes completed items from TODO (history lives in JOURNAL). Enforced at
+  `/jarpa:session-end` and reflected in the `/jarpa:init` templates.
 
 ## [0.2.2] — 2026-04-13
 

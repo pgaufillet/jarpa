@@ -140,23 +140,15 @@ fi
 
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo " Test 3: MCP Server Configuration"
+echo " Test 3: Statusline Configuration"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-if $INSIDE_CLAUDE; then
-    log_skip "MCP server test (nested Claude Code session)"
+# The context-monitor MCP server was removed in 0.3.0; the statusline is the
+# only context-monitoring artifact the plugin ships.
+if [[ -x "$PLUGIN_ROOT/mcp-servers/context-monitor/statusline.sh" ]]; then
+    log_pass "statusline.sh present and executable"
 else
-    # Check if MCP server is recognized
-    log_info "Checking MCP server configuration..."
-
-    MCP_OUTPUT=$(cd "$TEST_DIR" && claude --plugin-dir "$PLUGIN_ROOT" --print -p "Check the MCP server status. Is there a 'context-monitor' server configured? Answer with just 'yes' or 'no' and its status." 2>&1) || true
-
-    if echo "$MCP_OUTPUT" | grep -qi "context-monitor\|yes"; then
-        log_pass "MCP context-monitor server recognized"
-    else
-        log_fail "MCP context-monitor server not found in output"
-        log_info "Output was: $(echo "$MCP_OUTPUT" | head -5)"
-    fi
+    log_fail "statusline.sh missing or not executable"
 fi
 
 echo ""

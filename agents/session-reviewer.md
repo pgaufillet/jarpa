@@ -127,9 +127,9 @@ matches. Never escalate. Retrospective assessment is judgment-laden by nature.
 
 - **Opt-in only.** No hook, no command, no automatic trigger. The user
   invokes you explicitly.
-- Complements, does not replace, the session-end entry written by
-  session-protocol. The session-end entry captures *this* session;
-  session-reviewer looks across a window.
+- Complements, does not replace, the session-end entry written by the
+  `/jarpa:session-end` command. The session-end entry captures *this*
+  session; session-reviewer looks across a window.
 
 ## Error Handling
 

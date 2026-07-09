@@ -2,10 +2,8 @@
 #
 # JARPA Context Monitor — Statusline
 #
-# Reads the Claude Code statusline payload on stdin (JSON) and:
-#   1. Writes a broker file consumed by server.sh with the current
-#      context window usage percentage.
-#   2. Emits a single compact status line on stdout for the Claude Code UI.
+# Reads the Claude Code statusline payload on stdin (JSON) and emits a
+# single compact status line on stdout for the Claude Code UI.
 #
 # Claude Code invokes this script on every turn. It must be fast
 # (<100ms) and must never fail in a way that breaks the UI line.
@@ -16,19 +14,6 @@
 #
 
 set -uo pipefail
-
-# --- Context file resolution — must match server.sh exactly ---
-
-resolve_context_file() {
-    if [[ -n "${JARPA_CONTEXT_FILE:-}" ]]; then
-        printf '%s' "$JARPA_CONTEXT_FILE"
-        return
-    fi
-    local dir="${XDG_RUNTIME_DIR:-${TMPDIR:-/tmp}}"
-    printf '%s/jarpa-context.json' "$dir"
-}
-
-CONTEXT_FILE=$(resolve_context_file)
 
 # --- Minimal JSON helpers (no jq needed) ---
 
@@ -45,8 +30,6 @@ json_get_num() {
 payload=$(cat 2>/dev/null || true)
 
 transcript_path=$(json_get_str "$payload" "transcript_path")
-session_id=$(json_get_str "$payload" "session_id")
-cwd=$(json_get_str "$payload" "cwd")
 model_display=$(json_get_str "$payload" "display_name")
 : "${model_display:=$(json_get_str "$payload" "id")}"
 
@@ -108,22 +91,6 @@ if [[ "$jarpa_budget" -gt 0 ]]; then
 else
     jarpa_pct=0
 fi
-
-# --- Write broker file atomically ---
-
-write_broker() {
-    local path="$1" content="$2"
-    local dir
-    dir=$(dirname "$path")
-    mkdir -p "$dir" 2>/dev/null || true
-    local tmp="${path}.tmp.$$"
-    if printf '%s\n' "$content" > "$tmp" 2>/dev/null; then
-        mv "$tmp" "$path" 2>/dev/null || rm -f "$tmp"
-    fi
-}
-
-broker_body="{\"usage_percent\":${jarpa_pct},\"model_percent\":${usage_percent},\"session_id\":\"${session_id}\",\"transcript_path\":\"${transcript_path}\",\"updated_at\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}"
-write_broker "$CONTEXT_FILE" "$broker_body"
 
 # --- Emit visible status line ---
 #

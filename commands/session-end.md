@@ -3,103 +3,124 @@ name: jarpa:session-end
 description: Complete end-of-session documentation updates
 ---
 
-# End Session Documentation
+# JARPA Session End
 
-Guide through end-of-session JARPA documentation updates using the session-protocol agent.
+Run the full end-of-session workflow inline. **Do not spawn a sub-agent** —
+this command must execute in the main conversation so the main agent's
+document cache is reused and no extra roundtrip is incurred.
 
-## Behavior
+## Scope Discipline (MANDATORY)
 
-Invokes the session-protocol agent to perform guided, interactive end-of-session documentation updates following JARPA methodology.
+Only read and write files under `jarpa/` at the repository root. Do not
+descend into nested `jarpa/` directories inside sub-projects.
 
 ## Process
 
-1. **Invoke session-protocol agent**:
-   - Use Task tool with `subagent_type: jarpa:session-protocol`
-   - Pass task description:
-     ```
-     Perform end-of-session workflow:
-     1. Gather session information from user (accomplishments, decisions, risks)
-     2. Create journal entry in JOURNAL.md using canonical format
-     3. Update TODO.md: mark completed tasks, designate next task
-     4. Update PROJECT_PLAN.md: reflect progress made
-     5. Check if JOURNAL.md needs archiving (check threshold)
-     ```
+### Step 1: Gather session information
 
-2. **Agent will interact with user**:
-   - Use AskUserQuestion to gather session information:
-     - What was accomplished this session?
-     - Which tasks were completed?
-     - What is the next task?
-     - Any technical decisions or risks to document?
+Collect the session summary with a single batched `AskUserQuestion` call
+(goal, what was accomplished, tasks completed, technical decisions +
+rationale, remaining work/risks, next task). If an answer is obvious from
+the conversation, propose it as the default instead of asking.
 
-3. **Agent will update files**:
-   - Append formatted entry to JOURNAL.md
-   - Update TODO.md (mark completed, designate next)
-   - Update PROJECT_PLAN.md if milestones changed
-   - Check JOURNAL.md line count
+### Step 2: Append journal entry to JOURNAL.md
 
-4. **If archiving needed**:
-   - Agent will inform user
-   - Suggest running `/jarpa:archive` command
-   - Do not archive automatically during session-end
+Determine the next session number by reading the last `## [YYYY-MM-DD] —
+Session N:` header in `jarpa/JOURNAL.md` and incrementing. Determine the
+date with `date +%F`.
 
-5. **Report summary** of changes made
+Append using this canonical format:
 
-## Tools to Use
+```markdown
 
-- Task: Invoke session-protocol agent
+## [YYYY-MM-DD] — Session N: Title
 
-## Example Usage
+### Goal
+- [Session goal]
+
+### Actions Performed
+- [Actions taken]
+
+### Technical Decisions & Rationale
+- Decision: [Decision]
+- Rationale: [Why]
+
+### Changes Made
+- Files updated:
+  - [File list]
+
+### Results
+- [Outcomes and achievements]
+
+### Remaining Work / Next Step
+- [Next task or continuation]
+
+### Notes / Risks
+- [Any concerns or observations]
+```
+
+Keep the entry lean — target 50-100 lines. Summarize Changes Made (don't list
+every file); record only non-obvious decisions; fold thin Notes/Risks into
+Remaining Work.
+
+Use `Edit` to append (find the last line of the file and add the new entry
+after it). Do not use `Write` — it would overwrite the file.
+
+### Step 3: Update TODO.md
+
+- Mark completed tasks with `[X]` and the completion date.
+- Prune completed items — their record lives in JOURNAL. Keep at most a short
+  "Recently Done" for this session.
+- Remove or update the `[ONGOING]` marker.
+- Designate the next task if known.
+- Use `Edit` for surgical updates.
+
+### Step 4: Update PROJECT_PLAN.md (if needed)
+
+Only update if milestones or the Current Step changed:
+- Mark completed deliverables (one-line status per milestone — not a progress
+  log; detail belongs in JOURNAL).
+- Update Current Step emphasis.
+
+Skip this step if nothing changed at the plan level.
+
+### Step 5: Check archiving threshold
+
+```bash
+wc -l jarpa/JOURNAL.md
+```
+
+Read threshold from `.claude/jarpa.local.md` (`thresholds.journal_lines`,
+default: 1500). If the line count is near or exceeds the threshold,
+recommend running `/jarpa:archive` separately. Do not archive during
+session-end — archiving is a distinct operation that runs
+`journal-validator` and requires its own confirmation.
+
+### Step 6: Report summary
+
+Present a concise summary to the user:
 
 ```
-/jarpa:session-end
+Session End Complete
+━━━━━━━━━━━━━━━━━━━━
+
+✓ Journal entry appended: Session N (YYYY-MM-DD)
+✓ TODO.md updated: [what changed]
+✓ PROJECT_PLAN.md updated: [what changed, or "no change"]
+
+Next task: [name]
+
+JOURNAL.md: [N] lines (threshold: [M])[ — archiving recommended]
 ```
 
-Agent will guide through:
-```
-Session End Documentation
-━━━━━━━━━━━━━━━━━━━━━━━━━
+## Context-Awareness Thresholds
 
-Current status:
-- TODO.md shows: [ONGOING] Implement user authentication
-- Last journal entry: 2024-06-15
+Canonical, in sync with `mcp-servers/context-monitor/statusline.sh`:
 
-Let me gather information for the journal entry...
-
-[Interactive questions to user about session accomplishments]
-
-Updating documentation...
-✓ Appended journal entry for 2024-06-20
-✓ Updated TODO.md: Marked 2 tasks complete, next task designated
-✓ Updated PROJECT_PLAN.md: Milestone 2 progress
-✓ JOURNAL.md at 1234 lines (threshold: 1500)
-
-Summary:
-- Journal entry created for session on 2024-06-20
-- Completed: User authentication, Password validation
-- Next: Session management implementation
-```
+- At 75% (WARNING), suggest planning session closure.
+- At 90% (CRITICAL), strongly recommend immediate `/jarpa:session-end`.
 
 ## When to Use
 
-This command should be run:
-- At the end of every working session (before closing Claude Code)
-- Before committing significant work
-- When switching to a different task or project area
-
-## Automation
-
-This command is automatically triggered by:
-- Stop hook
-- PreCompact hook (when context usage is very high)
-
-Users can also invoke it manually when needed.
-
-## Integration with Workflow
-
-The session-end workflow ensures JARPA discipline:
-1. Work is always documented before session closes
-2. TODO.md always reflects current state
-3. PROJECT_PLAN.md stays up-to-date
-4. Journal preserves complete history
-5. Context management is proactive (check for archiving)
+Runs automatically via the Stop and PreCompact hooks; also invoke manually
+before closing, before committing significant work, or when switching tasks.

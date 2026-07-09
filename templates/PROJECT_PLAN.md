@@ -1,4 +1,5 @@
 <!-- jarpa-format: 1 -->
+<!-- Current-state doc (not cumulative): milestones carry a one-line status, not a progress log. History lives in JOURNAL. -->
 # Project Plan
 
 ## Project

@@ -10,7 +10,7 @@
 #   ./tests/test_plugin.sh -v        # Verbose output
 #   ./tests/test_plugin.sh manifest  # Run specific test group
 #
-# Test groups: manifest, hooks, mcp, agents, commands, skills, templates, scripts
+# Test groups: manifest, hooks, statusline, agents, commands, skills, templates, scripts
 #
 
 set -euo pipefail
@@ -295,76 +295,28 @@ test_hooks() {
     fi
 }
 
-test_mcp() {
+test_statusline() {
     echo ""
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo " MCP Server Configuration Tests"
+    echo " Statusline Configuration Tests"
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-    local mcp_json="$PLUGIN_ROOT/.mcp.json"
-    local server_sh="$PLUGIN_ROOT/mcp-servers/context-monitor/server.sh"
-
-    assert_file_exists "$mcp_json" ".mcp.json exists"
-    assert_json_valid "$mcp_json" ".mcp.json is valid JSON"
-    assert_json_has_field "$mcp_json" ".mcpServers" ".mcp.json has 'mcpServers' field"
-    assert_json_has_field "$mcp_json" '.mcpServers["context-monitor"]' "context-monitor server defined"
-
-    # Check server command
-    TESTS_RUN=$((TESTS_RUN + 1))
-    local cmd
-    cmd=$(jq -r '.mcpServers["context-monitor"].command' "$mcp_json")
-    if [[ "$cmd" == "bash" ]]; then
-        TESTS_PASSED=$((TESTS_PASSED + 1))
-        log_success "MCP server command is bash (wrapper script)"
-    else
-        TESTS_FAILED=$((TESTS_FAILED + 1))
-        log_fail "MCP server command should be bash (got: $cmd)"
-    fi
-
-    # Check server args use ${CLAUDE_PLUGIN_ROOT}
-    TESTS_RUN=$((TESTS_RUN + 1))
-    if jq -e '.mcpServers["context-monitor"].args[] | select(contains("${CLAUDE_PLUGIN_ROOT}"))' "$mcp_json" >/dev/null 2>&1; then
-        TESTS_PASSED=$((TESTS_PASSED + 1))
-        log_success "MCP server args use \${CLAUDE_PLUGIN_ROOT}"
-    else
-        TESTS_FAILED=$((TESTS_FAILED + 1))
-        log_fail "MCP server args should use \${CLAUDE_PLUGIN_ROOT}"
-    fi
-
-    # Check bash server file
-    assert_file_exists "$server_sh" "server.sh exists"
-    assert_executable "$server_sh" "server.sh is executable"
-    assert_shell_syntax "$server_sh" "server.sh has valid syntax"
-    assert_contains "$server_sh" "THRESHOLD_WARNING" "server.sh defines warning threshold"
-    assert_contains "$server_sh" "THRESHOLD_CRITICAL" "server.sh defines critical threshold"
-    assert_contains "$server_sh" "check_health" "server.sh exposes check_health tool"
-
-    # .mcp.json must point directly at server.sh (no run-server.sh wrapper)
-    TESTS_RUN=$((TESTS_RUN + 1))
-    if jq -e '.mcpServers["context-monitor"].args[] | select(endswith("/server.sh"))' "$mcp_json" >/dev/null 2>&1; then
-        TESTS_PASSED=$((TESTS_PASSED + 1))
-        log_success ".mcp.json args point directly to server.sh"
-    else
-        TESTS_FAILED=$((TESTS_FAILED + 1))
-        log_fail ".mcp.json args should reference server.sh directly"
-    fi
-
-    # Legacy wrapper must be gone
-    TESTS_RUN=$((TESTS_RUN + 1))
-    local wrapper="$PLUGIN_ROOT/mcp-servers/context-monitor/run-server.sh"
-    if [[ ! -e "$wrapper" ]]; then
-        TESTS_PASSED=$((TESTS_PASSED + 1))
-        log_success "Legacy run-server.sh wrapper removed"
-    else
-        TESTS_FAILED=$((TESTS_FAILED + 1))
-        log_fail "Legacy run-server.sh wrapper should not exist"
-    fi
-
-    # Statusline script shipped with the plugin
+    # The context-monitor MCP server was removed in 0.3.0; the statusline is
+    # now the only context-monitoring artifact the plugin ships.
     local statusline="$PLUGIN_ROOT/mcp-servers/context-monitor/statusline.sh"
     assert_file_exists "$statusline" "statusline.sh exists"
     assert_executable "$statusline" "statusline.sh is executable"
     assert_shell_syntax "$statusline" "statusline.sh has valid syntax"
+
+    # The plugin must ship no MCP server declaration
+    TESTS_RUN=$((TESTS_RUN + 1))
+    if [[ ! -e "$PLUGIN_ROOT/.mcp.json" ]]; then
+        TESTS_PASSED=$((TESTS_PASSED + 1))
+        log_success "No .mcp.json (plugin ships no MCP server)"
+    else
+        TESTS_FAILED=$((TESTS_FAILED + 1))
+        log_fail ".mcp.json should not exist after MCP server removal"
+    fi
 }
 
 test_agents() {
@@ -598,13 +550,6 @@ test_integration() {
         assert_file_exists "$PLUGIN_ROOT/hooks/scripts/$script" "Referenced script $script exists"
     done
 
-    # Check MCP server path exists
-    log_info "Verifying MCP server path..."
-    local mcp_json="$PLUGIN_ROOT/.mcp.json"
-    local server_path
-    server_path=$(jq -r '.mcpServers["context-monitor"].args[0]' "$mcp_json" | sed 's|\${CLAUDE_PLUGIN_ROOT}|'"$PLUGIN_ROOT"'|')
-    assert_file_exists "$server_path" "MCP server file exists at referenced path"
-
     # Cross-reference check: commands referencing agents
     log_info "Checking command-agent references..."
     if grep -l "journal-validator" "$PLUGIN_ROOT/commands"/*.md >/dev/null 2>&1; then
@@ -639,7 +584,7 @@ main() {
     case "${TEST_GROUP:-all}" in
         manifest)  test_manifest ;;
         hooks)     test_hooks ;;
-        mcp)       test_mcp ;;
+        statusline) test_statusline ;;
         agents)    test_agents ;;
         commands)  test_commands ;;
         skills)    test_skills ;;
@@ -649,7 +594,7 @@ main() {
         all)
             test_manifest
             test_hooks
-            test_mcp
+            test_statusline
             test_agents
             test_commands
             test_skills
@@ -659,7 +604,7 @@ main() {
             ;;
         *)
             echo "Unknown test group: $TEST_GROUP"
-            echo "Available groups: manifest, hooks, mcp, agents, commands, skills, templates, scripts, integration, all"
+            echo "Available groups: manifest, hooks, statusline, agents, commands, skills, templates, scripts, integration, all"
             exit 1
             ;;
     esac

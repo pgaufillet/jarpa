@@ -3,7 +3,7 @@
 #
 # 1. Ensure the JARPA statusline is configured in the project's
 #    .claude/settings.json (auto-install on first session).
-# 2. Trigger the session-protocol agent for the full start workflow.
+# 2. Trigger the /jarpa:session-start command for the full start workflow.
 
 SETTINGS="${CLAUDE_PROJECT_DIR:-.}/.claude/settings.json"
 # Resolved path — ${CLAUDE_PLUGIN_ROOT} is NOT expanded in settings.json,
@@ -40,5 +40,5 @@ SEOF
 ensure_statusline
 
 cat << 'EOF'
-Invoke the session-protocol agent (subagent_type: jarpa:session-protocol) with the task: "Perform session-start workflow: read jarpa/PROJECT_PLAN.md, jarpa/TODO.md, and jarpa/JOURNAL.md. Present a 'where are we now' status summary. Validate that the current task scope fits one working session. Check if JOURNAL.md needs archiving."
+Automatically invoke the /jarpa:session-start command to present the current JARPA status, validate task scope, and check journal archiving needs.
 EOF
