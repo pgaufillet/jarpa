@@ -48,6 +48,9 @@ Each action must have: a clear goal, a definition of done, a bounded scope.
 - PROJECT_PLAN.md must indicate: milestones, ordered steps, current step (emphasized).
 - Current-state only: no per-session progress narrative. A milestone carries a
   one-line status, not a running log. Completed-work detail lives in JOURNAL.
+- Current Step is a constant-size synthesis (a few sentences). Update it by
+  rewriting, never by appending session entries — if it only grows, it is
+  drifting into a journal.
 
 ## Todo List Management
 
@@ -122,6 +125,24 @@ Prefer clean session boundaries over compacted conversations.
 - **JOURNAL.md**: Authoritative for past actions.
 - **PROJECT_PLAN.md**: Contract for future work. Deviations require explicit confirmation.
 - **In doubt**: Ask explicitly rather than assume.
+
+## Persistent Memory Boundary
+
+The consumer repository IS the project's memory. The assistant's persistent
+memory (auto-memory directory) is a second, unversioned, probabilistically
+recalled store — restrict it to what the repository cannot hold:
+
+- **Store in memory**: user profile and collaboration preferences only
+  (who the user is, how they want the assistant to work).
+- **Never store in memory**: project facts, technical findings, tooling
+  pitfalls, methodology rules. Their homes are the consumer's `docs/`,
+  `CLAUDE.md`, or `jarpa/` files — versioned, reviewable, and loaded
+  deterministically.
+- **Write-time test**: "would this matter in a different project with the
+  same user?" If not, it is a project fact — it goes in the repository.
+- **Recall-time rule**: a recalled memory asserting a project fact is a
+  pointer, not a truth. Verify it against the repository; the repository
+  wins.
 
 ## Priority Rules
 

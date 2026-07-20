@@ -23,6 +23,9 @@ under the repository root. Apply these rules strictly:
    JARPA-tracked. If the user asks about one, say so and stop.
 4. **If the user explicitly asks you to read outside `jarpa/`**, do so but
    state clearly that you are stepping outside the JARPA scope.
+5. **Recalled persistent memories are pointers, not truths.** One asserting
+   a project fact (a file, flag, or procedure) must be verified against the
+   repository before use — the repository wins.
 
 ## Process
 

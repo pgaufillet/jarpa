@@ -77,14 +77,27 @@ after it). Do not use `Write` — it would overwrite the file.
 
 ### Step 4: Update PROJECT_PLAN.md (if needed)
 
-Only update if milestones or the Current Step changed:
-- Mark completed deliverables (one-line status per milestone — not a progress
-  log; detail belongs in JOURNAL).
-- Update Current Step emphasis.
+Touch this file only when the coarse-grain state changed: a front opened or
+closed, the current step moved, or a milestone status changed. Skip
+otherwise — most sessions do not qualify.
 
-Skip this step if nothing changed at the plan level.
+When it did change:
+- **Rewrite, never append.** Current Step is a constant-size synthesis (a
+  few sentences: what is acquired, the active front, the next step).
+  Per-session narrative ("Session N: …") never enters this file — that is
+  JOURNAL's job.
+- Milestones carry a one-line status, not a progress log.
+- Open questions go to Risks / Open Questions, not Current Step.
 
-### Step 5: Check archiving threshold
+### Step 5: Memory hygiene
+
+Review memories written during this session. Any that records a project or
+technical fact must be moved to its repository home (docs/, CLAUDE.md,
+jarpa/) and the memory file deleted — persistent memory keeps only
+user-profile and collaboration preferences (see the jarpa-methodology
+skill, "Persistent Memory Boundary").
+
+### Step 6: Check archiving threshold
 
 ```bash
 wc -l jarpa/JOURNAL.md
@@ -96,7 +109,7 @@ recommend running `/jarpa:archive` separately. Do not archive during
 session-end — archiving is a distinct operation that runs
 `journal-validator` and requires its own confirmation.
 
-### Step 6: Report summary
+### Step 7: Report summary
 
 Present a concise summary to the user:
 
