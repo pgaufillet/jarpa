@@ -5,6 +5,29 @@ All notable changes to the JARPA plugin are recorded here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] — 2026-07-20
+
+### Added
+
+- **Persistent memory boundary.** The methodology now bounds the assistant's
+  persistent memory to user profile and collaboration preferences. Project
+  and technical facts belong in the consumer repository (docs, CLAUDE.md,
+  jarpa/) — versioned and loaded deterministically, where memory recall is
+  probabilistic and drifts. Enforced at session start (recalled memories are
+  verified against the repository, which wins), at session end (new "Memory
+  hygiene" step migrating stray project facts to their repository homes), in
+  the jarpa-methodology skill (normative "Persistent Memory Boundary"
+  section), and in the CLAUDE.md inject template (Key Rules bullet).
+
+### Changed
+
+- **Hardened PROJECT_PLAN discipline.** Session-end Step 4 now requires
+  rewriting Current Step as a constant-size synthesis — never appending
+  per-session narrative — and routes open questions to Risks / Open
+  Questions. The PROJECT_PLAN template and the methodology skill state the
+  same rule. Motivated by observed drift in a consumer project: Current Step
+  had grown into a session-by-session log duplicating JOURNAL.
+
 ## [0.3.0] — 2026-07-09
 
 ### Removed
