@@ -555,6 +555,81 @@ test_integration() {
     if grep -l "journal-validator" "$PLUGIN_ROOT/commands"/*.md >/dev/null 2>&1; then
         assert_file_exists "$PLUGIN_ROOT/agents/journal-validator.md" "Referenced agent journal-validator exists"
     fi
+
+    # Upgrade command: managed CLAUDE.md block resync contract
+    log_info "Checking upgrade block-resync contract..."
+
+    local upgrade_cmd="$PLUGIN_ROOT/commands/upgrade.md"
+    local inject_template="$PLUGIN_ROOT/templates/CLAUDE_MD_INJECT.md"
+
+    assert_contains "$upgrade_cmd" "JARPA:BEGIN" "upgrade.md covers the managed CLAUDE.md block"
+    assert_contains "$upgrade_cmd" "CLAUDE_MD_INJECT.md" "upgrade.md references the inject template"
+
+    # The documented resync replaces marker-to-marker with the full template,
+    # which is only safe if the template is delimited by the markers itself.
+    TESTS_RUN=$((TESTS_RUN + 1))
+    if head -1 "$inject_template" | grep -q "^<!-- JARPA:BEGIN" \
+        && tail -1 "$inject_template" | grep -q "^<!-- JARPA:END -->$"; then
+        TESTS_PASSED=$((TESTS_PASSED + 1))
+        log_success "Inject template is delimited by BEGIN/END markers"
+    else
+        TESTS_FAILED=$((TESTS_FAILED + 1))
+        log_fail "Inject template must start with JARPA:BEGIN and end with JARPA:END"
+    fi
+
+    # Simulate the documented resync on a stale block: the block must equal
+    # the template afterwards, consumer prose outside the markers must
+    # survive, and a second pass must be a no-op.
+    resync_block() {
+        awk -v tpl="$inject_template" '
+            /^<!-- JARPA:BEGIN/ {while ((getline line < tpl) > 0) print line; close(tpl); skip=1; next}
+            /^<!-- JARPA:END -->$/ {if (skip) {skip=0; next}}
+            !skip {print}
+        ' "$1" > "$1.new" && mv "$1.new" "$1"
+    }
+
+    local tmp_dir
+    tmp_dir=$(mktemp -d)
+    {
+        echo "# Consumer project"
+        echo ""
+        echo "Consumer prose above the block."
+        echo ""
+        echo "<!-- JARPA:BEGIN - managed by jarpa plugin, do not edit manually -->"
+        echo "## JARPA Methodology"
+        echo ""
+        echo "Stale rules from an older plugin version."
+        echo "<!-- JARPA:END -->"
+        echo ""
+        echo "Consumer prose below the block."
+    } > "$tmp_dir/CLAUDE.md"
+
+    resync_block "$tmp_dir/CLAUDE.md"
+
+    TESTS_RUN=$((TESTS_RUN + 1))
+    local block_after
+    block_after=$(sed -n '/^<!-- JARPA:BEGIN/,/^<!-- JARPA:END -->$/p' "$tmp_dir/CLAUDE.md")
+    if [[ "$block_after" == "$(cat "$inject_template")" ]] \
+        && grep -q "Consumer prose above the block." "$tmp_dir/CLAUDE.md" \
+        && grep -q "Consumer prose below the block." "$tmp_dir/CLAUDE.md"; then
+        TESTS_PASSED=$((TESTS_PASSED + 1))
+        log_success "Stale block resync yields template block, consumer prose intact"
+    else
+        TESTS_FAILED=$((TESTS_FAILED + 1))
+        log_fail "Stale block resync corrupted CLAUDE.md"
+    fi
+
+    TESTS_RUN=$((TESTS_RUN + 1))
+    cp "$tmp_dir/CLAUDE.md" "$tmp_dir/CLAUDE.md.first"
+    resync_block "$tmp_dir/CLAUDE.md"
+    if cmp -s "$tmp_dir/CLAUDE.md" "$tmp_dir/CLAUDE.md.first"; then
+        TESTS_PASSED=$((TESTS_PASSED + 1))
+        log_success "Second resync pass is a no-op (idempotent)"
+    else
+        TESTS_FAILED=$((TESTS_FAILED + 1))
+        log_fail "Resync is not idempotent"
+    fi
+    rm -rf "$tmp_dir"
 }
 
 # ============================================================================

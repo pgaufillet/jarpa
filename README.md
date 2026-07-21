@@ -111,7 +111,7 @@ CRITICAL run `/jarpa:session-end`.
 | `/jarpa:session-end` | End-of-session documentation (also triggered automatically) |
 | `/jarpa:archive` | Archive older journal entries when JOURNAL.md grows large |
 | `/jarpa:status` | Show current project status |
-| `/jarpa:upgrade` | Upgrade consumer jarpa/ files to the current on-disk format |
+| `/jarpa:upgrade` | Upgrade consumer jarpa/ files to the current on-disk format and resync the managed CLAUDE.md block |
 | `/jarpa:test-installation` | Verify the plugin is installed correctly |
 
 ## Project Structure

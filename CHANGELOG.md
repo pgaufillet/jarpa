@@ -5,6 +5,20 @@ All notable changes to the JARPA plugin are recorded here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- **`/jarpa:upgrade` now resyncs the managed CLAUDE.md block.** Besides format
+  markers in `jarpa/*.md`, the command replaces the content between
+  `<!-- JARPA:BEGIN` and `<!-- JARPA:END -->` with the installed
+  `templates/CLAUDE_MD_INJECT.md` when it has drifted. The block is
+  plugin-owned ("managed by jarpa plugin, do not edit manually") but was
+  previously only written at init, so consumers that updated the plugin kept
+  outdated rules — the v0.3.1 rollout required manual block edits in every
+  consumer. First-time injection remains `/jarpa:init`'s job; consumer
+  content outside the markers is never touched.
+
 ## [0.3.1] — 2026-07-20
 
 ### Added
