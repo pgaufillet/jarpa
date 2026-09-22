@@ -122,9 +122,14 @@ rate_pct() {
 
 # --- Emit visible status line ---
 #
-# Left  : "<model> · JARPA <gauge> <pct>% ctx <label>"
-# Right : "5h <gauge> NN% · 7d <gauge> NN%" (opt-in, right-justified)
+# Base  : "<model> · JARPA <gauge> <pct>% ctx <label>"
+# Opt-in: " │ 5h <gauge> NN% · 7d <gauge> NN%" appended right after the base.
 # Context gauge uses a 10-cell bar; rate-limit gauges use a compact 4-cell bar.
+#
+# The rate-limit section is appended, not right-justified: outside fullscreen
+# rendering Claude Code shows its own notifications (MCP errors, updates,
+# context-low warning) on the right side of the status line row, truncating
+# whatever sits there.
 
 gauge() {
     local pct="$1"
@@ -140,14 +145,15 @@ gauge() {
 }
 
 # Display width in terminal columns. The only non-ASCII glyphs we emit are the
-# gauge cells and the "·" separator, all one column wide but multi-byte in
-# UTF-8. Collapse them to a single ASCII byte first so ${#} counts columns
+# gauge cells and the "·" / "│" separators, all one column wide but multi-byte
+# in UTF-8. Collapse them to a single ASCII byte first so ${#} counts columns
 # regardless of the locale (C or UTF-8).
 disp_width() {
     local s="$1"
     s="${s//█/#}"
     s="${s//░/#}"
     s="${s//·/.}"
+    s="${s//│/|}"
     printf '%s' "${#s}"
 }
 
@@ -163,32 +169,29 @@ fi
 left=$(printf '%s · JARPA %s %d%% ctx %s' \
     "$model_display" "$(gauge "$usage_percent")" "$usage_percent" "$label")
 
-# Build the optional right-justified rate-limit section.
-right=""
+# Build the optional rate-limit section.
+rates=""
 if [[ "${JARPA_SHOW_RATE_LIMITS:-}" == "1" ]]; then
-    parts=""
     fh=$(rate_pct "five_hour")
     sd=$(rate_pct "seven_day")
     if [[ -n "$fh" ]]; then
-        parts="5h $(gauge "$fh" 4) ${fh}%"
+        rates="5h $(gauge "$fh" 4) ${fh}%"
     fi
     if [[ -n "$sd" ]]; then
-        [[ -n "$parts" ]] && parts="$parts · "
-        parts="${parts}7d $(gauge "$sd" 4) ${sd}%"
+        [[ -n "$rates" ]] && rates="$rates · "
+        rates="${rates}7d $(gauge "$sd" 4) ${sd}%"
     fi
-    right="$parts"
 fi
 
-# Right-justify the rate-limit section against the terminal width. All-or-
-# nothing: if the columns are unknown or there is no room for at least one
-# separating space, the whole right section is dropped rather than wrapped.
-if [[ -n "$right" && "${COLUMNS:-}" =~ ^[0-9]+$ ]]; then
-    gap=$(( COLUMNS - $(disp_width "$left") - $(disp_width "$right") ))
-    if [[ "$gap" -ge 1 ]]; then
-        printf '%s%*s%s\n' "$left" "$gap" "" "$right"
-    else
-        printf '%s\n' "$left"
+# Append the rate-limit section after a "│" separator. All-or-nothing: if the
+# columns are unknown or the full line would not fit (keeping a small margin
+# for the interface's own spacing), the whole section is dropped rather than
+# wrapped or truncated mid-gauge.
+line="$left"
+if [[ -n "$rates" && "${COLUMNS:-}" =~ ^[0-9]+$ ]]; then
+    full="$left │ $rates"
+    if [[ "$(disp_width "$full")" -le $(( COLUMNS - 2 )) ]]; then
+        line="$full"
     fi
-else
-    printf '%s\n' "$left"
 fi
+printf '%s\n' "$line"

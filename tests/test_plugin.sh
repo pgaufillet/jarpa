@@ -326,10 +326,10 @@ test_statusline() {
     local payload='{"display_name":"Opus 4.8","context_window":{"used_percentage":58,"context_window_size":200000},"rate_limits":{"five_hour":{"used_percentage":34.2,"resets_at":1},"seven_day":{"used_percentage":18,"resets_at":1},"spend_limit":{"used_percentage":62,"resets_at":1}}}'
 
     # Display width in terminal columns, mirroring the script's own counting:
-    # the gauge glyphs and "·" are one column but multi-byte in UTF-8.
+    # the gauge glyphs and separators are one column but multi-byte in UTF-8.
     _disp_width() {
         local s="$1"
-        s="${s//█/#}"; s="${s//░/#}"; s="${s//·/.}"
+        s="${s//█/#}"; s="${s//░/#}"; s="${s//·/.}"; s="${s//│/|}"
         printf '%s' "${#s}"
     }
 
@@ -346,14 +346,32 @@ test_statusline() {
         log_fail "Rate-limit gauges missing/incorrect (got: $out)"
     fi
 
-    # Opt-in, wide terminal: the line is right-justified to exactly COLUMNS.
+    # Opt-in, wide terminal: the section follows the context state directly
+    # after a "│" separator — no padding pushing it into the right-side area
+    # Claude Code reserves for its notifications.
     TESTS_RUN=$((TESTS_RUN + 1))
-    if [[ "$(_disp_width "$out")" -eq 120 ]]; then
+    if [[ "$out" == *"ctx OK │ 5h "* && "$(_disp_width "$out")" -lt 80 ]]; then
         TESTS_PASSED=$((TESTS_PASSED + 1))
-        log_success "Rate-limit section is right-justified to terminal width"
+        log_success "Rate-limit section appended after separator, not right-justified"
     else
         TESTS_FAILED=$((TESTS_FAILED + 1))
-        log_fail "Line width $(_disp_width "$out") != 120 (got: $out)"
+        log_fail "Rate-limit section not appended after separator (got: $out)"
+    fi
+
+    # Fit boundary: the section is kept only when the full line fits within
+    # COLUMNS minus the 2-column margin left for the interface's own spacing.
+    local full_width
+    full_width=$(_disp_width "$out")
+    local fits tight
+    fits=$(printf '%s' "$payload" | COLUMNS=$((full_width + 2)) JARPA_SHOW_RATE_LIMITS=1 bash "$statusline")
+    tight=$(printf '%s' "$payload" | COLUMNS=$((full_width + 1)) JARPA_SHOW_RATE_LIMITS=1 bash "$statusline")
+    TESTS_RUN=$((TESTS_RUN + 1))
+    if [[ "$fits" == *"7d "* && "$tight" != *"5h "* && "$tight" == *"ctx "* ]]; then
+        TESTS_PASSED=$((TESTS_PASSED + 1))
+        log_success "Rate-limit section kept only with 2-column margin"
+    else
+        TESTS_FAILED=$((TESTS_FAILED + 1))
+        log_fail "Fit boundary wrong (fits: $fits | tight: $tight)"
     fi
 
     # Context percentage is read from context_window, not from rate_limits
