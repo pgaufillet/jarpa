@@ -99,6 +99,19 @@ renders a gauge in your status line:
   window. Set `JARPA_CONTEXT_TOKENS` to a lower value (e.g., `250000`) to
   trigger warnings earlier — useful with large-context models where
   efficiency degrades well before the window is full.
+- **Account rate-limit gauges (opt-in)**: Set `JARPA_SHOW_RATE_LIMITS=1` to
+  append two right-justified gauges for your account's 5-hour session window
+  and 7-day (weekly) window:
+
+  ```
+  <model> · JARPA ███░░░░░░░ 28% ctx OK              5h █░░░ 34% · 7d ░░░░ 18%
+  ```
+
+  These come from Claude Code's `rate_limits` payload (Pro/Max accounts,
+  after the first API response) and are global to your account, not this
+  session. If the terminal is too narrow to fit both, they are hidden rather
+  than wrapped. The per-model weekly window shown in `/usage` ("Fable") is
+  not exposed to statuslines and cannot be displayed.
 
 Watch the gauge to decide when to wrap up: at WARNING plan closure, at
 CRITICAL run `/jarpa:session-end`.

@@ -5,6 +5,21 @@ All notable changes to the JARPA plugin are recorded here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **Account rate-limit gauges in the statusline (opt-in).** Set
+  `JARPA_SHOW_RATE_LIMITS=1` to append two right-justified gauges for the
+  account's 5-hour session window (`rate_limits.five_hour`) and 7-day window
+  (`rate_limits.seven_day`), labelled `5h`/`7d` to keep them distinct from
+  the context percentage (those values are global to the account, not the
+  session). The gauges are right-justified against `$COLUMNS` and hidden
+  all-or-nothing when the terminal is too narrow or the width is unknown.
+  The per-model weekly window that `/usage` shows ("Fable") is not plumbed to
+  the statusline payload, so only these two windows are available. Off by
+  default; the base line is unchanged when the variable is unset.
+
 ## [0.3.2] — 2026-07-21
 
 ### Changed

@@ -317,6 +317,92 @@ test_statusline() {
         TESTS_FAILED=$((TESTS_FAILED + 1))
         log_fail ".mcp.json should not exist after MCP server removal"
     fi
+
+    # --- Behavioral tests: run the statusline against sample payloads ---
+    #
+    # Payload with a 58% context window and account rate limits (5h=34%,
+    # 7d=18%). Rate-limit values differ from the context value so a
+    # regression that mixes them up is caught.
+    local payload='{"display_name":"Opus 4.8","context_window":{"used_percentage":58,"context_window_size":200000},"rate_limits":{"five_hour":{"used_percentage":34.2,"resets_at":1},"seven_day":{"used_percentage":18,"resets_at":1},"spend_limit":{"used_percentage":62,"resets_at":1}}}'
+
+    # Display width in terminal columns, mirroring the script's own counting:
+    # the gauge glyphs and "·" are one column but multi-byte in UTF-8.
+    _disp_width() {
+        local s="$1"
+        s="${s//█/#}"; s="${s//░/#}"; s="${s//·/.}"
+        printf '%s' "${#s}"
+    }
+
+    local out
+
+    # Opt-in, wide terminal: both gauges present with correct percentages.
+    out=$(printf '%s' "$payload" | COLUMNS=120 JARPA_SHOW_RATE_LIMITS=1 bash "$statusline")
+    TESTS_RUN=$((TESTS_RUN + 1))
+    if [[ "$out" == *"5h "*"34%"* && "$out" == *"7d "*"18%"* ]]; then
+        TESTS_PASSED=$((TESTS_PASSED + 1))
+        log_success "Rate-limit gauges show 5h 34% and 7d 18% when opted in"
+    else
+        TESTS_FAILED=$((TESTS_FAILED + 1))
+        log_fail "Rate-limit gauges missing/incorrect (got: $out)"
+    fi
+
+    # Opt-in, wide terminal: the line is right-justified to exactly COLUMNS.
+    TESTS_RUN=$((TESTS_RUN + 1))
+    if [[ "$(_disp_width "$out")" -eq 120 ]]; then
+        TESTS_PASSED=$((TESTS_PASSED + 1))
+        log_success "Rate-limit section is right-justified to terminal width"
+    else
+        TESTS_FAILED=$((TESTS_FAILED + 1))
+        log_fail "Line width $(_disp_width "$out") != 120 (got: $out)"
+    fi
+
+    # Context percentage is read from context_window, not from rate_limits
+    # (regression guard for the 0.2.2 greedy-match bug).
+    TESTS_RUN=$((TESTS_RUN + 1))
+    if [[ "$out" == *"58% ctx"* && "$out" != *"34% ctx"* ]]; then
+        TESTS_PASSED=$((TESTS_PASSED + 1))
+        log_success "Context percentage isolated from rate-limit values"
+    else
+        TESTS_FAILED=$((TESTS_FAILED + 1))
+        log_fail "Context percentage confused with rate-limit value (got: $out)"
+    fi
+
+    # Not opted in: no rate-limit gauges are shown.
+    out=$(printf '%s' "$payload" | COLUMNS=120 bash "$statusline")
+    TESTS_RUN=$((TESTS_RUN + 1))
+    if [[ "$out" != *"5h "* && "$out" != *"7d "* ]]; then
+        TESTS_PASSED=$((TESTS_PASSED + 1))
+        log_success "Rate-limit gauges hidden without JARPA_SHOW_RATE_LIMITS"
+    else
+        TESTS_FAILED=$((TESTS_FAILED + 1))
+        log_fail "Rate-limit gauges shown despite opt-out (got: $out)"
+    fi
+
+    # Opt-in but terminal too narrow: all-or-nothing hides the gauges.
+    out=$(printf '%s' "$payload" | COLUMNS=30 JARPA_SHOW_RATE_LIMITS=1 bash "$statusline")
+    TESTS_RUN=$((TESTS_RUN + 1))
+    if [[ "$out" != *"5h "* && "$out" != *"7d "* ]]; then
+        TESTS_PASSED=$((TESTS_PASSED + 1))
+        log_success "Rate-limit gauges hidden when terminal too narrow"
+    else
+        TESTS_FAILED=$((TESTS_FAILED + 1))
+        log_fail "Rate-limit gauges shown on narrow terminal (got: $out)"
+    fi
+
+    # Opt-in but no rate_limits in payload (e.g. before first API response):
+    # the base line is emitted unchanged, no gauges.
+    out=$(printf '%s' '{"display_name":"M","context_window":{"used_percentage":10,"context_window_size":200000}}' \
+        | COLUMNS=120 JARPA_SHOW_RATE_LIMITS=1 bash "$statusline")
+    TESTS_RUN=$((TESTS_RUN + 1))
+    if [[ "$out" == *"10% ctx"* && "$out" != *"5h "* ]]; then
+        TESTS_PASSED=$((TESTS_PASSED + 1))
+        log_success "Missing rate_limits tolerated (base line intact)"
+    else
+        TESTS_FAILED=$((TESTS_FAILED + 1))
+        log_fail "Missing rate_limits not handled cleanly (got: $out)"
+    fi
+
+    unset -f _disp_width
 }
 
 test_agents() {

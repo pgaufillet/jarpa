@@ -92,20 +92,63 @@ else
     jarpa_pct=0
 fi
 
+# --- Account rate-limit windows (opt-in) ---
+#
+# When JARPA_SHOW_RATE_LIMITS=1, two consumption gauges are appended and
+# right-justified: the 5-hour session window and the 7-day (weekly) window.
+# These come from the payload's rate_limits object and are GLOBAL to the
+# account, not scoped to this session — hence the distinct 5h/7d labels so
+# they are never confused with the ctx percentage.
+#
+# The payload exposes no per-model weekly window (the "Fable" row in /usage
+# is not plumbed to the statusline), so only these two windows are shown.
+#
+# Fields appear only for Pro/Max accounts and only after the first API
+# response of the session; each window may be independently absent. Missing
+# values are tolerated silently.
+
+# Extract a rate_limits.<window>.used_percentage value (integer part) without
+# jq. The payload nests three used_percentage keys, so we scope to the window
+# key first and read the FIRST used_percentage after it. Prints nothing when
+# the window is absent.
+rate_pct() {
+    local window="$1"
+    [[ "$payload" == *"\"$window\""* ]] || return 0
+    local after="${payload#*\"$window\"}"
+    [[ "$after" == *"used_percentage"* ]] || return 0
+    after="${after#*used_percentage}"
+    printf '%s' "$after" | sed -n 's/^[^0-9]*\([0-9][0-9]*\).*/\1/p'
+}
+
 # --- Emit visible status line ---
 #
-# Format: "<model> · JARPA <gauge> <pct>% ctx <label>"
-# Gauge uses a 10-cell visual bar.
+# Left  : "<model> · JARPA <gauge> <pct>% ctx <label>"
+# Right : "5h <gauge> NN% · 7d <gauge> NN%" (opt-in, right-justified)
+# Context gauge uses a 10-cell bar; rate-limit gauges use a compact 4-cell bar.
 
 gauge() {
     local pct="$1"
-    local filled=$(( pct / 10 ))
-    [[ "$filled" -gt 10 ]] && filled=10
+    local cells="${2:-10}"
+    local filled=$(( pct * cells / 100 ))
+    [[ "$filled" -gt "$cells" ]] && filled="$cells"
+    [[ "$filled" -lt 0 ]] && filled=0
     local bar=""
     local i
     for (( i = 0; i < filled; i++ )); do bar+="█"; done
-    for (( i = filled; i < 10; i++ )); do bar+="░"; done
+    for (( i = filled; i < cells; i++ )); do bar+="░"; done
     printf '%s' "$bar"
+}
+
+# Display width in terminal columns. The only non-ASCII glyphs we emit are the
+# gauge cells and the "·" separator, all one column wide but multi-byte in
+# UTF-8. Collapse them to a single ASCII byte first so ${#} counts columns
+# regardless of the locale (C or UTF-8).
+disp_width() {
+    local s="$1"
+    s="${s//█/#}"
+    s="${s//░/#}"
+    s="${s//·/.}"
+    printf '%s' "${#s}"
 }
 
 label=""
@@ -117,4 +160,35 @@ else
     label="OK"
 fi
 
-printf '%s · JARPA %s %d%% ctx %s\n' "$model_display" "$(gauge "$usage_percent")" "$usage_percent" "$label"
+left=$(printf '%s · JARPA %s %d%% ctx %s' \
+    "$model_display" "$(gauge "$usage_percent")" "$usage_percent" "$label")
+
+# Build the optional right-justified rate-limit section.
+right=""
+if [[ "${JARPA_SHOW_RATE_LIMITS:-}" == "1" ]]; then
+    parts=""
+    fh=$(rate_pct "five_hour")
+    sd=$(rate_pct "seven_day")
+    if [[ -n "$fh" ]]; then
+        parts="5h $(gauge "$fh" 4) ${fh}%"
+    fi
+    if [[ -n "$sd" ]]; then
+        [[ -n "$parts" ]] && parts="$parts · "
+        parts="${parts}7d $(gauge "$sd" 4) ${sd}%"
+    fi
+    right="$parts"
+fi
+
+# Right-justify the rate-limit section against the terminal width. All-or-
+# nothing: if the columns are unknown or there is no room for at least one
+# separating space, the whole right section is dropped rather than wrapped.
+if [[ -n "$right" && "${COLUMNS:-}" =~ ^[0-9]+$ ]]; then
+    gap=$(( COLUMNS - $(disp_width "$left") - $(disp_width "$right") ))
+    if [[ "$gap" -ge 1 ]]; then
+        printf '%s%*s%s\n' "$left" "$gap" "" "$right"
+    else
+        printf '%s\n' "$left"
+    fi
+else
+    printf '%s\n' "$left"
+fi
