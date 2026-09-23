@@ -9,7 +9,7 @@ This project uses JARPA for structured documentation.
 - **Tests**: No dummy or placeholder tests. Every test must set up, act, verify, and be capable of failing.
 - **Documentation**: Only `jarpa/JOURNAL.md` is cumulative (append-only). All other jarpa/ docs reflect current state.
 - **Session discipline**: Work only on the current task. No scope creep. Surface risks immediately.
-- **Persistent memory**: reserved for user profile and collaboration preferences. Project and technical facts live in the repository (docs, CLAUDE.md, jarpa/) — never in assistant memory. A recalled memory asserting a project fact must be verified against the repository; the repository wins.
+- **Persistent memory**: prefer disabling Claude Code auto-memory (`"autoMemoryEnabled": false` in `.claude/settings.json`). If kept, it is reserved for user profile and collaboration preferences. Project and technical facts live in the repository (docs, CLAUDE.md, jarpa/) — never in assistant memory. A recalled memory asserting a project fact must be verified against the repository; the repository wins.
 
 ### Opt-in Advisory Agents
 

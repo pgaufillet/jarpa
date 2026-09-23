@@ -30,6 +30,14 @@ The repository contains a `jarpa/` folder with the following files:
 Only JOURNAL.md preserves history. All other files must reflect the current
 state of the project at the end of each session.
 
+**Satellite files.** Any other file in `jarpa/` (a sub-plan, an index, an
+audit report) declares its status in its first lines, so it can be kept or
+removed deliberately:
+
+- `<!-- jarpa-status: living -->` — kept current, like the core files.
+- `<!-- jarpa-status: snapshot -->` — dated record, never updated.
+- `<!-- jarpa-status: temporary -->` — deleted once consumed.
+
 ## Working Session Definition
 
 A working session corresponds to a focused work unit that can be:
@@ -51,6 +59,10 @@ Each action must have: a clear goal, a definition of done, a bounded scope.
 - Current Step is a constant-size synthesis (a few sentences). Update it by
   rewriting, never by appending session entries — if it only grows, it is
   drifting into a journal.
+- **PLAN holds direction, TODO holds work.** PROJECT_PLAN carries only stable
+  content: goal, milestones, ordered steps, current step. Every actionable
+  task — including planned work not yet started — lives in TODO. A PLAN entry
+  that needs the JOURNAL to justify itself is misfiled.
 
 ## Todo List Management
 
@@ -60,6 +72,8 @@ Each action must have: a clear goal, a definition of done, a bounded scope.
 - Each item must include a definition of done.
 - Prune on completion: drop finished items (their record lives in JOURNAL).
   Keep at most a short "Recently Done" for the current session only.
+- Not-yet-started work goes to Next or Later, never to PROJECT_PLAN (see
+  Project Plan Management).
 
 ## Journal (Cumulative)
 
@@ -80,9 +94,14 @@ JOURNAL.md is append-only. Canonical entry format:
 Session numbers are mandatory, sequential, and enforced by journal-validator
 before archiving.
 
-**Keep entries lean — target 50-100 lines.** Write only what a future session
-needs: Changes Made summarizes (don't enumerate every file); Technical Decisions
-records only the non-obvious; fold Notes/Risks into Remaining Work when thin.
+**Keep entries lean — target 50-100 lines (about 6 KB).** Write only what a
+future session needs: Changes Made summarizes (don't enumerate every file);
+Technical Decisions records only the non-obvious; fold Notes/Risks into
+Remaining Work when thin. Measurements repeated every session belong in a
+structured file cited by the entry, not in prose.
+
+**Measure in bytes.** Line counts are skewed by wrapping. `/jarpa:session-end`
+reports sizes in bytes against configurable thresholds (report only).
 
 **Archiving:** When JOURNAL.md exceeds the configured threshold (default: 1500 lines),
 archive older sessions to `jarpa/archive/`. Keep 5-10 recent sessions in active file.
@@ -106,9 +125,10 @@ archive older sessions to `jarpa/archive/`. Keep 5-10 recent sessions in active 
 
 ### End of Session (Mandatory)
 1. Append entry to JOURNAL.md.
-2. Update PROJECT_PLAN.md (progress, current step).
+2. Update PROJECT_PLAN.md only if the current step or a milestone status changed.
 3. Update TODO.md (completed items removed, next task designated).
 4. Update REQUIREMENTS.md and ARCHITECTURE.md if needed.
+5. Review the hygiene report and act on flagged items, or plan them in TODO.
 
 ## Context Management
 
@@ -123,14 +143,17 @@ Prefer clean session boundaries over compacted conversations.
 ## Conflict Resolution
 
 - **JOURNAL.md**: Authoritative for past actions.
-- **PROJECT_PLAN.md**: Contract for future work. Deviations require explicit confirmation.
+- **PROJECT_PLAN.md**: Contract for direction (goal, milestones, current step). Deviations require explicit confirmation.
 - **In doubt**: Ask explicitly rather than assume.
 
 ## Persistent Memory Boundary
 
 The consumer repository IS the project's memory. The assistant's persistent
 memory (auto-memory directory) is a second, unversioned, probabilistically
-recalled store — restrict it to what the repository cannot hold:
+recalled store. **Prefer disabling it** in JARPA projects:
+`"autoMemoryEnabled": false` in `.claude/settings.json` (or
+`CLAUDE_CODE_DISABLE_AUTO_MEMORY=1` for one session). If kept, restrict it
+to what the repository cannot hold:
 
 - **Store in memory**: user profile and collaboration preferences only
   (who the user is, how they want the assistant to work).

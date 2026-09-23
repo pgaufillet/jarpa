@@ -50,6 +50,9 @@ This command sets up the complete JARPA documentation structure with safe re-run
 
    thresholds:
      journal_lines: 1500
+     journal_entry_bytes: 6000
+     todo_bytes: 30000
+     plan_bytes: 15000
 
    session:
      expected_duration: "2-4 hours"

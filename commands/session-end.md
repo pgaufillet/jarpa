@@ -88,6 +88,8 @@ When it did change:
   JOURNAL's job.
 - Milestones carry a one-line status, not a progress log.
 - Open questions go to Risks / Open Questions, not Current Step.
+- Planned but not-yet-started work goes to TODO (Next/Later), not here. A
+  PLAN entry that needs the JOURNAL to justify itself is misfiled.
 
 ### Step 5: Memory hygiene
 
@@ -97,17 +99,28 @@ jarpa/) and the memory file deleted — persistent memory keeps only
 user-profile and collaboration preferences (see the jarpa-methodology
 skill, "Persistent Memory Boundary").
 
-### Step 6: Check archiving threshold
+### Step 6: Measure hygiene
+
+Run the metrics script after the journal and TODO updates, so it measures
+this session's final state:
 
 ```bash
-wc -l jarpa/JOURNAL.md
+bash "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/metrics.sh"
 ```
 
-Read threshold from `.claude/jarpa.local.md` (`thresholds.journal_lines`,
-default: 1500). If the line count is near or exceeds the threshold,
-recommend running `/jarpa:archive` separately. Do not archive during
-session-end — archiving is a distinct operation that runs
-`journal-validator` and requires its own confirmation.
+It reports — in bytes, since line counts are skewed by wrapping — JOURNAL
+size and entry sizes, TODO and PROJECT_PLAN sizes, closed TODO items,
+`[ONGOING]` markers, satellites without a status marker, session
+references in recent commits of the project's repositories, the managed
+CLAUDE.md block state, and the auto-memory state. Thresholds come from
+`.claude/jarpa.local.md` (`thresholds.*`) with documented defaults.
+
+The report is advisory: never block, never fix during session-end. Relay
+it verbatim, and for each `[!!]` line recommend the matching action in one
+line (e.g. `/jarpa:archive`, prune TODO, rewrite PROJECT_PLAN to current
+state, `/jarpa:upgrade`). Do not archive during session-end — archiving is
+a distinct operation that runs `journal-validator` and requires its own
+confirmation.
 
 ### Step 7: Report summary
 
@@ -123,7 +136,8 @@ Session End Complete
 
 Next task: [name]
 
-JOURNAL.md: [N] lines (threshold: [M])[ — archiving recommended]
+[metrics report, verbatim]
+[one recommended action per [!!] line]
 ```
 
 ## Context-Awareness Thresholds

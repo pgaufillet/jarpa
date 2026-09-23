@@ -1,5 +1,5 @@
 <!-- jarpa-format: 1 -->
-<!-- Current-state doc (not cumulative): milestones carry a one-line status, not a progress log. Current Step is rewritten at constant size, never appended to. History lives in JOURNAL. -->
+<!-- Current-state doc (not cumulative): goal, milestones and current step only. Milestones carry a one-line status, not a progress log. Current Step is rewritten at constant size, never appended to. Planned but not-yet-started work lives in TODO; history lives in JOURNAL. -->
 # Project Plan
 
 ## Project

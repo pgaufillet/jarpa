@@ -10,7 +10,7 @@
 #   ./tests/test_plugin.sh -v        # Verbose output
 #   ./tests/test_plugin.sh manifest  # Run specific test group
 #
-# Test groups: manifest, hooks, statusline, agents, commands, skills, templates, scripts
+# Test groups: manifest, hooks, statusline, agents, commands, skills, templates, scripts, metrics
 #
 
 set -euo pipefail
@@ -614,7 +614,7 @@ test_scripts() {
 
     assert_dir_exists "$PLUGIN_ROOT/hooks/scripts" "hooks/scripts/ directory exists"
 
-    local expected_scripts=("session-start.sh" "session-end.sh" "pre-compact.sh" "pre-commit.sh")
+    local expected_scripts=("session-start.sh" "session-end.sh" "pre-compact.sh" "pre-commit.sh" "metrics.sh")
 
     for script in "${expected_scripts[@]}"; do
         local script_path="$PLUGIN_ROOT/hooks/scripts/$script"
@@ -736,6 +736,225 @@ test_integration() {
     rm -rf "$tmp_dir"
 }
 
+test_metrics() {
+    echo ""
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo " Hygiene Metrics Tests"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+    local metrics="$PLUGIN_ROOT/hooks/scripts/metrics.sh"
+    local template="$PLUGIN_ROOT/templates/CLAUDE_MD_INJECT.md"
+    local tmp
+    tmp=$(mktemp -d)
+
+    # Isolated user config: the real ~/.claude must never leak into results.
+    local home="$tmp/home"
+    mkdir -p "$home/.claude"
+
+    _run_metrics() {
+        env -u CLAUDE_CODE_DISABLE_AUTO_MEMORY -u CLAUDE_PROJECT_DIR -u CLAUDE_CONFIG_DIR \
+            HOME="$home" bash "$metrics" "$@"
+    }
+
+    _check() {
+        local desc="$1"; shift
+        TESTS_RUN=$((TESTS_RUN + 1))
+        if "$@"; then
+            TESTS_PASSED=$((TESTS_PASSED + 1))
+            log_success "$desc"
+        else
+            TESTS_FAILED=$((TESTS_FAILED + 1))
+            log_fail "$desc"
+            log_verbose "  output: $out"
+        fi
+    }
+
+    _has()    { [[ "$out" == *"$1"* ]]; }
+    _hasnt()  { [[ "$out" != *"$1"* ]]; }
+    _repeat() { local i; for ((i = 0; i < $2; i++)); do printf '%s\n' "$1"; done; }
+
+    # Healthy project: core files well under thresholds, managed block
+    # current, auto-memory disabled at project scope.
+    local p="$tmp/healthy"
+    mkdir -p "$p/jarpa" "$p/.claude"
+    # Entry bodies of 900 and 2900 bytes (plus a ~33-byte header each):
+    # mean ~1.9 KB, last ~2.9 KB.
+    {
+        echo "# Journal"
+        echo "## [2026-01-01] — Session 1: A"
+        _repeat "$(printf '%099d' 0)" 9
+        echo "## [2026-01-02] — Session 2: B"
+        _repeat "$(printf '%099d' 0)" 29
+    } > "$p/jarpa/JOURNAL.md"
+    printf '# Todo\n## Now\n[ONGOING] Do the thing\n- [ ] sub\n      DoD: done\n## Recently Done\n- [X] one\n' > "$p/jarpa/TODO.md"
+    printf '# Plan\n## Current Step\n**Current:** Step 1\n' > "$p/jarpa/PROJECT_PLAN.md"
+    cp "$template" "$p/CLAUDE.md"
+    echo '{ "autoMemoryEnabled": false }' > "$p/.claude/settings.json"
+
+    local out rc
+    out=$(_run_metrics "$p"); rc=$?
+    _check "Healthy project: nothing flagged" _has "all measures within thresholds"
+    _check "Healthy project: exit code 0" [ "$rc" -eq 0 ]
+    _check "Journal entries counted with mean and last size" _has "journal entries: 2, mean 1.9 KB, last 2.9 KB"
+    _check "Managed block up to date detected" _has "managed block: up to date"
+    _check "Auto-memory disabled at project scope detected" _has "auto-memory: disabled (project settings)"
+
+    # Entry size is measured in bytes: many short lines stay under the
+    # target, few long lines exceed it.
+    local j="$tmp/journal-bytes"
+    mkdir -p "$j/jarpa"
+    { echo "## [2026-01-01] — Session 1: Many short lines"; _repeat "0123456789" 200; } > "$j/jarpa/JOURNAL.md"
+    out=$(_run_metrics "$j")
+    _check "200 short lines (~2 KB) not flagged as oversized entry" _has "[ok] journal entries: 1"
+    { echo "## [2026-01-01] — Session 1: Few long lines"; _repeat "$(printf '%0200d' 0)" 40; } > "$j/jarpa/JOURNAL.md"
+    out=$(_run_metrics "$j")
+    _check "40 long lines (~8 KB) flagged as oversized entry" _has "[!!] journal entries: 1"
+
+    # Legacy "## Session N" headers still delimit entries.
+    { echo "## Session 1: legacy"; echo x; echo "## [2026-01-02] — Session 2: canonical"; echo y; } > "$j/jarpa/JOURNAL.md"
+    out=$(_run_metrics "$j")
+    _check "Legacy session headers counted as entries" _has "journal entries: 2"
+
+    # Journal line threshold drives the archive recommendation.
+    { echo "## [2026-01-01] — Session 1: A"; _repeat "x" 1600; } > "$j/jarpa/JOURNAL.md"
+    out=$(_run_metrics "$j")
+    _check "JOURNAL over 1500 lines recommends /jarpa:archive" _has "run /jarpa:archive"
+
+    # TODO and PLAN over default byte thresholds are flagged; a project
+    # setting overrides the default.
+    local t="$tmp/big"
+    mkdir -p "$t/jarpa" "$t/.claude"
+    _repeat "$(printf '%0100d' 0)" 310 > "$t/jarpa/TODO.md"
+    _repeat "$(printf '%0100d' 0)" 160 > "$t/jarpa/PROJECT_PLAN.md"
+    out=$(_run_metrics "$t")
+    _check "TODO over 30 KB default flagged" _has "[!!] TODO.md 31.3 KB"
+    _check "PROJECT_PLAN over 15 KB default flagged" _has "[!!] PROJECT_PLAN.md 16.2 KB"
+    printf -- '---\nthresholds:\n  todo_bytes: 50000\n  plan_bytes: 1000\n---\n' > "$t/.claude/jarpa.local.md"
+    out=$(_run_metrics "$t")
+    _check "todo_bytes setting raises the TODO threshold" _has "[ok] TODO.md 31.3 KB (threshold 50.0 KB)"
+    _check "plan_bytes setting lowers the PLAN threshold" _has "[!!] PROJECT_PLAN.md 16.2 KB (threshold 1.0 KB)"
+
+    # Closed items above 10 and several [ONGOING] markers are flagged;
+    # prose mentioning [ONGOING] is not a marker.
+    local m="$tmp/markers"
+    mkdir -p "$m/jarpa"
+    { echo "## Now"; echo "[ONGOING] Task A"; echo "Note: remove the [ONGOING] marker at the end"; _repeat "- [X] done" 10; } > "$m/jarpa/TODO.md"
+    out=$(_run_metrics "$m")
+    _check "10 closed items not flagged" _has "[ok] TODO closed items: 10"
+    _check "Prose [ONGOING] mention not counted" _has "[ok] TODO [ONGOING] markers: 1"
+    { echo "## Now"; echo "[ONGOING] Task A"; echo "- [ ] [ONGOING] Task B"; _repeat "- [x] done" 8; _repeat "- ✅ done" 3; } > "$m/jarpa/TODO.md"
+    out=$(_run_metrics "$m")
+    _check "11 closed items ([x] and ✅) flagged" _has "[!!] TODO closed items: 11"
+    _check "Two [ONGOING] markers flagged" _has "[!!] TODO [ONGOING] markers: 2"
+
+    # Minimal file set (JOURNAL + TODO only): absent files are skipped.
+    local mini="$tmp/minimal"
+    mkdir -p "$mini/jarpa"
+    printf '## [2026-01-01] — Session 1: A\nx\n' > "$mini/jarpa/JOURNAL.md"
+    printf '## Now\n' > "$mini/jarpa/TODO.md"
+    out=$(_run_metrics "$mini"); rc=$?
+    _check "Minimal file set: no PROJECT_PLAN line, exit 0" bash -c '[[ "$1" != *PROJECT_PLAN* && "$2" -eq 0 ]]' _ "$out" "$rc"
+
+    # Satellites: unmarked flagged, marked accepted, temporary counted.
+    printf '<!-- jarpa-status: living -->\n# Index\n' > "$mini/jarpa/INDEX.md"
+    printf '# Old audit\n' > "$mini/jarpa/AUDIT.md"
+    printf '<!-- jarpa-status: temporary -->\n# Sprint plan\n' > "$mini/jarpa/sprint-plan.md"
+    out=$(_run_metrics "$mini")
+    _check "Satellite without status marker flagged by name" _has "satellites: 3, 1 without jarpa-status marker (AUDIT.md)"
+    _check "Temporary satellite reported" _has "temporary satellites: 1"
+    printf '<!-- jarpa-status: snapshot -->\n# Old audit\n' > "$mini/jarpa/AUDIT.md"
+    out=$(_run_metrics "$mini")
+    _check "All satellites marked: accepted" _has "[ok] satellites: 3, all with a jarpa-status marker"
+
+    # Managed block states.
+    _run_block() { out=$(_run_metrics "$mini"); }
+    rm -f "$mini/CLAUDE.md"; _run_block
+    _check "Missing CLAUDE.md block flagged absent" _has "managed block: absent"
+    { cat "$template"; } | sed '$d' > "$mini/CLAUDE.md"; _run_block
+    _check "Block without END marker flagged malformed" _has "managed block: malformed"
+    { echo "# Project"; sed 's/Key Rules/Old Rules/' "$template"; echo "Consumer prose"; } > "$mini/CLAUDE.md"; _run_block
+    _check "Drifted block flagged stale" _has "managed block: stale"
+    { echo "# Project"; cat "$template"; echo "Consumer prose"; } > "$mini/CLAUDE.md"; _run_block
+    _check "Current block with consumer prose around it is up to date" _has "managed block: up to date"
+
+    # Auto-memory resolution: env var, then local > project > user; absent = on.
+    local a="$tmp/memory"
+    mkdir -p "$a/jarpa" "$a/.claude"
+    printf '## Now\n' > "$a/jarpa/TODO.md"
+    out=$(_run_metrics "$a")
+    _check "Absent setting: auto-memory enabled by default" _has "auto-memory: enabled (default)"
+    local slug
+    slug=$(printf '%s' "$a" | sed 's/[^[:alnum:]]/-/g')
+    mkdir -p "$home/.claude/projects/$slug/memory"
+    touch "$home/.claude/projects/$slug/memory/"{MEMORY.md,fact_a.md,fact_b.md}
+    out=$(_run_metrics "$a")
+    _check "Enabled auto-memory reports memory file count (index excluded)" _has "2 memory file(s)"
+    echo '{ "autoMemoryEnabled": false }' > "$home/.claude/settings.json"
+    out=$(_run_metrics "$a")
+    _check "User settings false disables" _has "auto-memory: disabled (user settings)"
+    echo '{ "autoMemoryEnabled": true }' > "$a/.claude/settings.json"
+    out=$(_run_metrics "$a")
+    _check "Project settings true overrides user false" _has "auto-memory: enabled (project settings)"
+    echo '{ "autoMemoryEnabled": false }' > "$a/.claude/settings.local.json"
+    out=$(_run_metrics "$a")
+    _check "Local settings false overrides project true" _has "auto-memory: disabled (local settings)"
+    rm -f "$a/.claude/settings.local.json" "$home/.claude/settings.json"
+    out=$(env -u CLAUDE_PROJECT_DIR -u CLAUDE_CONFIG_DIR CLAUDE_CODE_DISABLE_AUTO_MEMORY=1 HOME="$home" bash "$metrics" "$a")
+    _check "CLAUDE_CODE_DISABLE_AUTO_MEMORY=1 overrides project true" _has "disabled (CLAUDE_CODE_DISABLE_AUTO_MEMORY)"
+
+    # Session references in commits: multi-repo layout (non-git project
+    # root, code repos one level down, jarpa/ as its own repository).
+    local w="$tmp/workspace"
+    mkdir -p "$w/app" "$w/lib" "$w/jarpa"
+    _git() { git -C "$1" -c init.defaultBranch=main "${@:2}" >/dev/null 2>&1; }
+    _commit() { # repo author-email message
+        git -C "$1" -c user.email="$2" -c user.name=T commit -q --allow-empty -m "$3" >/dev/null 2>&1
+    }
+    for r in app lib jarpa; do
+        _git "$w/$r" init -q
+        git -C "$w/$r" config user.email me@example.org
+    done
+    printf '## Now\n' > "$w/jarpa/TODO.md"
+    _commit "$w/app" me@example.org "Add parser"
+    _commit "$w/app" me@example.org "Fix overlay S214"
+    _commit "$w/app" other@example.org "Upstream change S555"
+    _commit "$w/lib" me@example.org "Wire session 42 cleanup"
+    _commit "$w/lib" me@example.org "Use S3 bucket for artifacts"
+    _commit "$w/jarpa" me@example.org "Journal S215"
+    out=$(_run_metrics "$w")
+    _check "Session refs found across sub-directory repos (2 own commits)" _has "session references in commits since 30 days ago: 2"
+    _check "Own commit in app repo reported" _has "app 1"
+    _check "jarpa/ repository excluded from the scan" _hasnt "jarpa 1"
+    _check "Other authors' commits not counted" _hasnt "S555"
+
+    # Single-repo layout: jarpa/ inside the code repository is scanned.
+    local sr="$tmp/single"
+    mkdir -p "$sr/jarpa"
+    _git "$sr" init -q
+    git -C "$sr" config user.email me@example.org
+    printf '## Now\n' > "$sr/jarpa/TODO.md"
+    # A 60-day-old offending commit (created first: git's --since walk stops
+    # at the first commit older than the window) sits outside the default
+    # 30-day window and inside an explicit 90-day one.
+    local old_date
+    old_date=$(date -d '60 days ago' '+%Y-%m-%dT%H:%M:%S')
+    GIT_AUTHOR_DATE="$old_date" GIT_COMMITTER_DATE="$old_date" \
+        _commit "$sr" me@example.org "Journal S100"
+    _commit "$sr" me@example.org "Cloture S196"
+    out=$(_run_metrics "$sr")
+    _check "Project repo itself scanned when jarpa/ lives inside it" _has "Cloture S196"
+    _check "Commit older than the default window not counted" _has "since 30 days ago: 1"
+    out=$(_run_metrics "$sr" --since "90 days ago")
+    _check "--since widens the scan window" _has "since 90 days ago: 2"
+
+    # No jarpa/ at all: explicit hint, still exit 0.
+    out=$(_run_metrics "$tmp/nowhere"); rc=$?
+    _check "Missing jarpa/ suggests /jarpa:init and exits 0" bash -c '[[ "$1" == *"/jarpa:init"* && "$2" -eq 0 ]]' _ "$out" "$rc"
+
+    unset -f _run_metrics _check _has _hasnt _repeat _run_block _git _commit
+    rm -rf "$tmp"
+}
+
 # ============================================================================
 # MAIN
 # ============================================================================
@@ -770,6 +989,7 @@ main() {
         templates) test_templates ;;
         scripts)   test_scripts ;;
         integration) test_integration ;;
+        metrics)   test_metrics ;;
         all)
             test_manifest
             test_hooks
@@ -780,10 +1000,11 @@ main() {
             test_templates
             test_scripts
             test_integration
+            test_metrics
             ;;
         *)
             echo "Unknown test group: $TEST_GROUP"
-            echo "Available groups: manifest, hooks, statusline, agents, commands, skills, templates, scripts, integration, all"
+            echo "Available groups: manifest, hooks, statusline, agents, commands, skills, templates, scripts, integration, metrics, all"
             exit 1
             ;;
     esac

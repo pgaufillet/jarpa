@@ -1,4 +1,5 @@
 <!-- jarpa-format: 1 -->
+<!-- Current-state doc (not cumulative): all remaining work, including planned work not yet started (Next/Later). Completed items are pruned; their record lives in JOURNAL. Direction (goal, milestones, current step) lives in PROJECT_PLAN. -->
 # Todo List
 
 ## Now (Current Session)

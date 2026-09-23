@@ -118,6 +118,28 @@ renders a gauge in your status line:
 Watch the gauge to decide when to wrap up: at WARNING plan closure, at
 CRITICAL run `/jarpa:session-end`.
 
+## Documentation Hygiene
+
+At the end of each session, `/jarpa:session-end` runs
+`hooks/scripts/metrics.sh` and relays a short report. It is advisory: it
+never blocks and never changes a file. Sizes are measured in bytes, because
+line counts are skewed by wrapping.
+
+| Measure | Flagged when | Setting (`.claude/jarpa.local.md`) |
+|---|---|---|
+| JOURNAL.md length | over (or within 10% of) the archive threshold | `thresholds.journal_lines` (1500) |
+| Journal entry size (mean and last) | over the target | `thresholds.journal_entry_bytes` (6000) |
+| TODO.md size | over the threshold | `thresholds.todo_bytes` (30000) |
+| PROJECT_PLAN.md size | over the threshold | `thresholds.plan_bytes` (15000) |
+| Closed TODO items | more than 10 | — |
+| `[ONGOING]` markers | more than 1 | — |
+| Satellite files in `jarpa/` | no `<!-- jarpa-status: living\|snapshot\|temporary -->` in their first lines | — |
+| Session references in commits | any, in the last 30 days, by you, in the project repository and its direct sub-directory repositories (a `jarpa/` repository is excluded) | — |
+| Managed CLAUDE.md block | absent, malformed or stale | — |
+| Claude Code auto-memory | enabled (env var, then local > project > user settings; absent = enabled) | — |
+
+Run it by hand at any time: `bash <plugin-root>/hooks/scripts/metrics.sh [project-dir]`.
+
 ## Commands
 
 | Command | Description |
@@ -136,7 +158,7 @@ After initialization, your project will contain:
 ```
 your-project/
 ├── jarpa/
-│   ├── PROJECT_PLAN.md       # Current milestones and progress
+│   ├── PROJECT_PLAN.md       # Goal, milestones, current step
 │   ├── TODO.md               # Task list (Now/Next/Later)
 │   ├── REQUIREMENTS.md       # Current requirements
 │   ├── ARCHITECTURE.md       # Current design
