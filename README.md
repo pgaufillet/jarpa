@@ -131,12 +131,13 @@ line counts are skewed by wrapping.
 | Journal entry size (mean and last) | over the target | `thresholds.journal_entry_bytes` (6000) |
 | TODO.md size | over the threshold | `thresholds.todo_bytes` (30000) |
 | PROJECT_PLAN.md size | over the threshold | `thresholds.plan_bytes` (15000) |
-| Closed TODO items | more than 10 | — |
-| `[ONGOING]` markers | more than 1 | — |
+| Closed TODO items (`[x]` or ✅ at line start, with or without a bullet) | more than 10 | — |
+| `[ONGOING]` markers (at line start or in a heading) | more than 1 | — |
+| ARCHITECTURE.md, REQUIREMENTS.md size | never — reported for information (read on demand, not at session start) | — |
 | Satellite files in `jarpa/` | no `<!-- jarpa-status: living\|snapshot\|temporary -->` in their first lines | — |
-| Session references in commits | any, in the last 30 days, by you, in the project repository and its direct sub-directory repositories (a `jarpa/` repository is excluded) | — |
+| Session references in commits | any, in the last 30 days or the last 10 JOURNAL entries (whichever is longer, so a pause does not hide them), by you, in the project repository and its direct sub-directory repositories (a `jarpa/` repository is excluded); the date of the latest one is shown | — |
 | Managed CLAUDE.md block | absent, malformed or stale | — |
-| Claude Code auto-memory | enabled (env var, then local > project > user settings; absent = enabled) | — |
+| Claude Code auto-memory | enabled (env var, then local > project > user settings; absent = enabled) and holding `project` or `reference` memories — preferences only (`user`, `feedback`) are accepted | — |
 
 Run it by hand at any time: `bash <plugin-root>/hooks/scripts/metrics.sh [project-dir]`.
 

@@ -799,6 +799,12 @@ test_metrics() {
     _check "Managed block up to date detected" _has "managed block: up to date"
     _check "Auto-memory disabled at project scope detected" _has "auto-memory: disabled (project settings)"
 
+    # ARCHITECTURE and REQUIREMENTS: size for information, never flagged.
+    _repeat "$(printf '%0100d' 0)" 1000 > "$p/jarpa/ARCHITECTURE.md"
+    out=$(_run_metrics "$p")
+    _check "Large ARCHITECTURE reported for information only" _has "[--] ARCHITECTURE.md 101.0 KB (read on demand, no threshold)"
+    _check "Large ARCHITECTURE does not raise a flag" _has "all measures within thresholds"
+
     # Entry size is measured in bytes: many short lines stay under the
     # target, few long lines exceed it.
     local j="$tmp/journal-bytes"
@@ -846,6 +852,15 @@ test_metrics() {
     out=$(_run_metrics "$m")
     _check "11 closed items ([x] and ✅) flagged" _has "[!!] TODO closed items: 11"
     _check "Two [ONGOING] markers flagged" _has "[!!] TODO [ONGOING] markers: 2"
+    # Closed boxes without a dash or with another bullet count too; a box
+    # in the middle of prose does not.
+    { _repeat "- [x] done" 9; echo "[x] **2.2 Closed step**"; echo "  * [X] nested"; echo "See the [x] notation above"; } > "$m/jarpa/TODO.md"
+    out=$(_run_metrics "$m")
+    _check "Closed boxes without a dash counted, prose box ignored" _has "[!!] TODO closed items: 11"
+    # A marker inside a heading counts.
+    { echo "## Now"; echo "### Tâche [ONGOING] Probe"; echo "- [ ] [ONGOING] Other"; } > "$m/jarpa/TODO.md"
+    out=$(_run_metrics "$m")
+    _check "Heading with [ONGOING] after text counted as a marker" _has "[!!] TODO [ONGOING] markers: 2"
 
     # Minimal file set (JOURNAL + TODO only): absent files are skipped.
     local mini="$tmp/minimal"
@@ -886,9 +901,17 @@ test_metrics() {
     local slug
     slug=$(printf '%s' "$a" | sed 's/[^[:alnum:]]/-/g')
     mkdir -p "$home/.claude/projects/$slug/memory"
-    touch "$home/.claude/projects/$slug/memory/"{MEMORY.md,fact_a.md,fact_b.md}
+    local memdir="$home/.claude/projects/$slug/memory"
+    touch "$memdir/MEMORY.md"
+    printf -- '---\nname: pref\ntype: feedback\n---\nAnswer first.\n' > "$memdir/pref.md"
+    printf -- '---\nname: me\nmetadata:\n  type: user\n---\nMaintainer.\n' > "$memdir/me.md"
     out=$(_run_metrics "$a")
     _check "Enabled auto-memory reports memory file count (index excluded)" _has "2 memory file(s)"
+    _check "Preference-only auto-memory not flagged" _has "[ok] auto-memory: enabled (default), 2 memory file(s), preferences only"
+    printf -- '---\nname: fact\nmetadata:\n  type: project\n---\nThe CAN bus runs at 500k.\n' > "$memdir/fact.md"
+    printf -- '---\nname: dash\ntype: reference\n---\nGrafana board.\n' > "$memdir/dash.md"
+    out=$(_run_metrics "$a")
+    _check "Project and reference memories flagged with their count" _has "[!!] auto-memory: enabled (default), 4 memory file(s), 2 project/reference"
     echo '{ "autoMemoryEnabled": false }' > "$home/.claude/settings.json"
     out=$(_run_metrics "$a")
     _check "User settings false disables" _has "auto-memory: disabled (user settings)"
@@ -943,9 +966,30 @@ test_metrics() {
     _commit "$sr" me@example.org "Cloture S196"
     out=$(_run_metrics "$sr")
     _check "Project repo itself scanned when jarpa/ lives inside it" _has "Cloture S196"
+    _check "Date of the latest session reference reported" _has "latest $(date +%F) "
     _check "Commit older than the default window not counted" _has "since 30 days ago: 1"
     out=$(_run_metrics "$sr" --since "90 days ago")
     _check "--since widens the scan window" _has "since 90 days ago: 2"
+
+    # After a pause the window reaches back to the 10th-last JOURNAL entry,
+    # so references made before the pause are still reported.
+    local pz="$tmp/pause"
+    mkdir -p "$pz/jarpa"
+    _git "$pz" init -q
+    git -C "$pz" config user.email me@example.org
+    local d100 d90 d60 i
+    d100=$(date -d '100 days ago' '+%Y-%m-%dT%H:%M:%S')
+    d90=$(date -d '90 days ago' '+%F')
+    d60=$(date -d '60 days ago' '+%Y-%m-%dT%H:%M:%S')
+    GIT_AUTHOR_DATE="$d100" GIT_COMMITTER_DATE="$d100" _commit "$pz" me@example.org "Probe S10"
+    GIT_AUTHOR_DATE="$d60" GIT_COMMITTER_DATE="$d60" _commit "$pz" me@example.org "Probe S20"
+    { for i in $(seq 1 9); do echo "## [$d90] — Session $i: before"; done
+      echo "## [$(date +%F)] — Session 10: resume"; } > "$pz/jarpa/JOURNAL.md"
+    out=$(_run_metrics "$pz")
+    _check "Window reaches the 10th-last entry after a pause" _has "since $d90 (last 10 sessions): 1"
+    { for i in $(seq 1 10); do echo "## [$(date +%F)] — Session $i: busy"; done; } > "$pz/jarpa/JOURNAL.md"
+    out=$(_run_metrics "$pz")
+    _check "Window stays at 30 days when the last 10 entries are recent" _has "since 30 days ago: 0"
 
     # No jarpa/ at all: explicit hint, still exit 0.
     out=$(_run_metrics "$tmp/nowhere"); rc=$?

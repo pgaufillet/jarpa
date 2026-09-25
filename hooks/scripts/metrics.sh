@@ -12,10 +12,10 @@
 set -uo pipefail
 
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$PWD}"
-SINCE="30 days ago"
+SINCE=""
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --since) SINCE="${2:-$SINCE}"; shift 2 ;;
+        --since) SINCE="${2:-}"; shift 2 ;;
         *) PROJECT_DIR="$1"; shift ;;
     esac
 done
@@ -91,13 +91,15 @@ if [[ -f "$JARPA/TODO.md" ]]; then
     msg="TODO.md $(kb "$t_bytes") (threshold $(kb "$TODO_BYTES_MAX"))"
     if (( t_bytes > TODO_BYTES_MAX )); then warn "$msg — prune"; else ok "$msg"; fi
 
-    closed=$(LC_ALL=C grep -cE '^[[:space:]]*- (\[[xX]\]|✅)' "$JARPA/TODO.md" || true)
+    # A closed box at line start, with or without a list bullet.
+    closed=$(LC_ALL=C grep -cE '^[[:space:]]*([-*+][[:space:]]+)?(\[[xX]\]|✅)' "$JARPA/TODO.md" || true)
     msg="TODO closed items: $closed (prune above $CLOSED_ITEMS_MAX — their record lives in JOURNAL)"
     if (( closed > CLOSED_ITEMS_MAX )); then warn "$msg"; else ok "$msg"; fi
 
-    # Marker at line start only (optionally after a list dash, checkbox,
-    # heading or bold), so prose mentioning "[ONGOING]" is not counted.
-    ongoing=$(grep -cE '^[[:space:]#*-]*(\[[ xX]\][[:space:]]*)?\**\[ONGOING' "$JARPA/TODO.md" || true)
+    # Marker at line start (optionally after a list dash, checkbox, heading
+    # or bold) or anywhere in a heading, so prose mentioning "[ONGOING]" is
+    # not counted.
+    ongoing=$(grep -cE '^[[:space:]#*-]*(\[[ xX]\][[:space:]]*)?\**\[ONGOING|^#+[[:space:]].*\[ONGOING' "$JARPA/TODO.md" || true)
     msg="TODO [ONGOING] markers: $ongoing (at most 1)"
     if (( ongoing > 1 )); then warn "$msg"; else ok "$msg"; fi
 fi
@@ -112,6 +114,12 @@ if [[ -f "$JARPA/PROJECT_PLAN.md" ]]; then
         ok "$msg"
     fi
 fi
+
+# --- ARCHITECTURE / REQUIREMENTS: read on demand, not at session start, so
+# their size is reported for information only.
+for f in ARCHITECTURE.md REQUIREMENTS.md; do
+    [[ -f "$JARPA/$f" ]] && info "$f $(kb "$(wc -c < "$JARPA/$f")") (read on demand, no threshold)"
+done
 
 # --- Satellites: any other jarpa/*.md needs a status marker in its head.
 satellites=0
@@ -157,6 +165,20 @@ for d in "$PROJECT_DIR" "$PROJECT_DIR"/*/; do
     repos+=("$top")
 done
 
+# Window: the last 30 days or the last 10 JOURNAL entries, whichever is
+# longer, so a pause does not empty it; --since overrides.
+SINCE_NOTE=""
+if [[ -z "$SINCE" ]]; then
+    SINCE="30 days ago"
+    tenth=""
+    [[ -f "$JARPA/JOURNAL.md" ]] && tenth=$(sed -n 's/^## \[\([0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}\)\].*/\1/p' "$JARPA/JOURNAL.md" | tail -10 | head -1)
+    # GNU date, then BSD date.
+    month_ago=$(date -d '30 days ago' +%F 2>/dev/null || date -v-30d +%F 2>/dev/null || true)
+    if [[ -n "$tenth" && -n "$month_ago" && "$tenth" < "$month_ago" ]]; then
+        SINCE="$tenth" SINCE_NOTE=" (last 10 sessions)"
+    fi
+fi
+
 SESSION_RE_1='(^|[^[:alnum:]_])S[0-9]{2,4}($|[^[:alnum:]_])'
 SESSION_RE_2='[Ss]ession[[:space:]]+[0-9]+'
 if (( ${#repos[@]} > 0 )); then
@@ -165,16 +187,18 @@ if (( ${#repos[@]} > 0 )); then
     for r in "${repos[@]}"; do
         email=$(git -C "$r" config user.email 2>/dev/null || true)
         hits=$(git -C "$r" log --since="$SINCE" ${email:+--author="$email"} \
-            -E --grep="$SESSION_RE_1" --grep="$SESSION_RE_2" --format='%h %s' 2>/dev/null || true)
+            -E --grep="$SESSION_RE_1" --grep="$SESSION_RE_2" --date=short --format='%ad %h %s' 2>/dev/null || true)
         [[ -z "$hits" ]] && continue
         count=$(printf '%s\n' "$hits" | wc -l)
         total=$((total + count))
-        details+=("$(basename "$r") $count, e.g. \"$(printf '%s\n' "$hits" | head -1 | cut -c1-60)\"")
+        # Newest first: the latest date tells a stopped practice from a live one.
+        latest=$(printf '%s\n' "$hits" | head -1)
+        details+=("$(basename "$r") $count, latest ${latest%% *} \"$(printf '%s' "${latest#* }" | cut -c1-60)\"")
     done
     if (( total > 0 )); then
-        warn "session references in commits since $SINCE: $total ($(IFS=';'; echo "${details[*]}")) — commits are public-facing"
+        warn "session references in commits since $SINCE$SINCE_NOTE: $total ($(IFS=';'; echo "${details[*]}")) — commits are public-facing"
     else
-        ok "session references in commits since $SINCE: 0 (${#repos[@]} repo(s))"
+        ok "session references in commits since $SINCE$SINCE_NOTE: 0 (${#repos[@]} repo(s))"
     fi
 fi
 
@@ -218,9 +242,21 @@ if [[ "$mem_state" == "false" ]]; then
 else
     slug=$(printf '%s' "$PROJECT_DIR" | sed 's/[^[:alnum:]]/-/g')
     mem_dir="$CONFIG_DIR/projects/$slug/memory"
-    mem_files=0
-    [[ -d "$mem_dir" ]] && mem_files=$(find "$mem_dir" -maxdepth 1 -name '*.md' ! -name MEMORY.md | wc -l)
-    warn "auto-memory: enabled (${mem_source:-default}), $mem_files memory file(s) — prefer \"autoMemoryEnabled\": false in .claude/settings.json"
+    mem_files=0 mem_project=0
+    if [[ -d "$mem_dir" ]]; then
+        mem_files=$(find "$mem_dir" -maxdepth 1 -name '*.md' ! -name MEMORY.md | wc -l)
+        # The methodology allows user profile and collaboration preferences
+        # (types user, feedback); project and reference memories hold facts
+        # that belong in the repository.
+        mem_project=$(find "$mem_dir" -maxdepth 1 -name '*.md' ! -name MEMORY.md \
+            -exec grep -lE '^[[:space:]]*type:[[:space:]]*(project|reference)[[:space:]]*$' {} + 2>/dev/null | wc -l)
+    fi
+    msg="auto-memory: enabled (${mem_source:-default}), $mem_files memory file(s)"
+    if (( mem_project > 0 )); then
+        warn "$msg, $mem_project project/reference — project facts belong in the repository; prefer \"autoMemoryEnabled\": false in .claude/settings.json"
+    else
+        ok "$msg, preferences only"
+    fi
 fi
 
 if (( FLAGS > 0 )); then

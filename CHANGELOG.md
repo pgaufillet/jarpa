@@ -13,10 +13,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `hooks/scripts/metrics.sh` and relays an advisory report (never blocks,
   never edits): JOURNAL length and mean/last entry size, TODO and
   PROJECT_PLAN sizes — in bytes, since line counts are skewed by wrapping —
-  closed TODO items, `[ONGOING]` markers, satellites without a status
-  marker, session references in recent commits of the project repository
-  and its direct sub-directory repositories, managed CLAUDE.md block state,
-  and Claude Code auto-memory state. New settings: `thresholds.journal_entry_bytes`
+  ARCHITECTURE and REQUIREMENTS sizes (information only), closed TODO items,
+  `[ONGOING]` markers, satellites without a status marker, session references
+  in commits of the project repository and its direct sub-directory
+  repositories over the last 30 days or 10 JOURNAL entries, whichever is
+  longer, managed CLAUDE.md block state, and Claude Code auto-memory state
+  (flagged only when it holds project or reference memories). New settings: `thresholds.journal_entry_bytes`
   (6000), `thresholds.todo_bytes` (30000), `thresholds.plan_bytes` (15000).
 - **Satellite status marker.** Other files in `jarpa/` declare
   `<!-- jarpa-status: living|snapshot|temporary -->` in their first lines.
