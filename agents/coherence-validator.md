@@ -1,31 +1,22 @@
 ---
 name: coherence-validator
-description: Use this agent to check cross-document coherence across the 5 JARPA files of an applicative project (PROJECT_PLAN, TODO, REQUIREMENTS, ARCHITECTURE, JOURNAL). Detects contradictions between hierarchy levels and content that has drifted into the wrong layer. Examples:
+description: Use this agent from /jarpa:review (Step 5) to check cross-document coherence across the 5 JARPA files of an applicative project (PROJECT_PLAN, TODO, REQUIREMENTS, ARCHITECTURE, JOURNAL). Detects contradictions between hierarchy levels and content that has drifted into the wrong layer. Not invoked outside a review. Examples:
 
 <example>
-Context: The user wants a coherence check before a review meeting.
+Context: /jarpa:review has finished its judged part and reaches Step 5.
+user: "/jarpa:review"
+assistant: "I'll launch coherence-validator and session-reviewer in parallel, passing them the findings already made so they report only new ones."
+<commentary>
+The review hands coherence-validator its known findings; the agent runs its checks and reports only what is not on that list, or what contradicts it.
+</commentary>
+</example>
+
+<example>
+Context: The user asks for a coherence check outside a review.
 user: "check that the JARPA docs are still consistent with each other"
-assistant: "I'll use the coherence-validator agent to run the full cross-document coherence check."
+assistant: "That is part of the periodic review; I'll run /jarpa:review, which invokes coherence-validator in its Step 5."
 <commentary>
-Coherence-validator compares the strategic (PROJECT_PLAN), specification (REQUIREMENTS), design (ARCHITECTURE) and tactical (TODO) layers for contradictions, and reports any content that has leaked into the wrong layer.
-</commentary>
-</example>
-
-<example>
-Context: The user suspects the team has drifted from the Current Step.
-user: "I feel we are no longer working on what the plan says, can you verify?"
-assistant: "I'll invoke the coherence-validator agent to check PROJECT_PLAN vs TODO alignment and report any drift."
-<commentary>
-The V1 check in coherence-validator compares PROJECT_PLAN Current Step against the [ONGOING] task(s) in TODO and flags semantic mismatch.
-</commentary>
-</example>
-
-<example>
-Context: A new feature appeared in TODO and the user wants to confirm it is legitimate.
-user: "someone added 'offline mode' to TODO — does that actually trace to REQUIREMENTS?"
-assistant: "I'll run the coherence-validator agent's P2 check to verify the upstream grounding of TODO items."
-<commentary>
-The P2 layer-purity check flags TODO items that introduce new needs without corresponding entries in REQUIREMENTS, which is a classic scope-creep vector.
+Coherence checks run from the review so their findings get closed (fixed, scheduled or refused) instead of piling up in a report.
 </commentary>
 </example>
 model: sonnet
@@ -106,6 +97,10 @@ helps verify or disambiguate a finding from the JARPA docs. Legitimate uses:
   feature or an internal refactor.
 
 **Never modify anything.** No Write, no Edit. You are strictly read-only.
+
+**Known findings.** The review passes the findings it has already made.
+Report only findings not on that list; when one of your checks contradicts
+a known finding, report the contradiction with its evidence.
 
 **Do not audit the codebase independently.** The purpose is to validate JARPA
 docs' coherence, not to perform code review. If a finding cannot be resolved
@@ -270,7 +265,8 @@ outcome.
 
 ## Integration Points
 
-- **On-demand:** invoked explicitly by the user or by `/jarpa:status`.
+- **From `/jarpa:review` only** (Step 5), in parallel with session-reviewer.
+  The review verifies each finding before relaying it and closes it.
 - **Not automatic:** no session-start, no session-end, no pre-commit trigger.
   Coherence checks carry enough LLM judgment that automation would produce
   nuisance reports.

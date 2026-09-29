@@ -130,6 +130,12 @@ archive older sessions to `jarpa/archive/`. Keep 5-10 recent sessions in active 
 4. Update REQUIREMENTS.md and ARCHITECTURE.md if needed.
 5. Review the hygiene report and act on flagged items, or plan them in TODO.
 
+### Periodic Review
+`/jarpa:review` runs as a dedicated session when session start announces it
+due. It checks project, document and method drift; every finding is fixed,
+scheduled in TODO with a date, or refused, and the next review starts from
+the scheduled ones. Its JOURNAL entry is titled `Session N: JARPA review`.
+
 ## Context Management
 
 The JARPA statusline surfaces context-window usage every turn; watch its gauge

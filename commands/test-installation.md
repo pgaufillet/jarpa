@@ -27,6 +27,7 @@ The following commands should be available (check /help output or attempt to inv
 - `/jarpa:session-start`
 - `/jarpa:session-end`
 - `/jarpa:upgrade`
+- `/jarpa:review`
 - `/jarpa:test-installation` (this command)
 
 Report: List which commands are available and which are missing.
@@ -35,8 +36,8 @@ Report: List which commands are available and which are missing.
 
 Check that JARPA agents are available:
 - `journal-validator` (journal structure and numbering)
-- `coherence-validator` (cross-document coherence, opt-in)
-- `session-reviewer` (retrospective review, opt-in)
+- `coherence-validator` (cross-document coherence, from `/jarpa:review`)
+- `session-reviewer` (retrospective review, from `/jarpa:review`)
 
 Sub-agents in JARPA are reserved for autonomous reviews; the session
 lifecycle (start/end) runs inline in the main agent via the

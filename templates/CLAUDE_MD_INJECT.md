@@ -11,14 +11,9 @@ This project uses JARPA for structured documentation.
 - **Session discipline**: Work only on the current task. No scope creep. Surface risks immediately.
 - **Persistent memory**: prefer disabling Claude Code auto-memory (`"autoMemoryEnabled": false` in `.claude/settings.json`). If kept, it is reserved for user profile and collaboration preferences. Project and technical facts live in the repository (docs, CLAUDE.md, jarpa/) — never in assistant memory. A recalled memory asserting a project fact must be verified against the repository; the repository wins.
 
-### Opt-in Advisory Agents
+### Periodic Review
 
-Two read-only agents are available on demand (not triggered by hooks):
-
-- **coherence-validator** — cross-document coherence check across the 5 `jarpa/` files.
-- **session-reviewer** — retrospective pattern review across a window of recent sessions.
-
-Invoke either when useful; both are advisory and never modify files.
+`/jarpa:review` is a dedicated session that checks project, document and method drift and closes every finding (fixed, scheduled with a date, or refused). Session start announces when it is due; the operator starts it. The read-only agents **coherence-validator** and **session-reviewer** are invoked from the review only.
 
 For full methodology, see the jarpa-methodology skill.
 <!-- JARPA:END -->

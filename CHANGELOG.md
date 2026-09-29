@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`/jarpa:review`, the periodic review.** A dedicated session that
+  checks project drift (plan vs sessions since the previous review),
+  document drift (misfiled or stale content) and method drift (local rules
+  vs the methodology), runs the hygiene metrics over the window, and asks
+  the operator an open question on the next sessions and a short retro.
+  Every finding is verified before it is relayed, classed as
+  *would-decide-wrong* (naming the decision it would mislead) or *stock*,
+  and closed: fixed, scheduled in TODO with a date, or refused. Its JOURNAL
+  entry, titled `Session N: JARPA review`, records the model used and the
+  scheduled items the next review starts from.
 - **Hygiene report at session end.** `/jarpa:session-end` runs
   `hooks/scripts/metrics.sh` and relays an advisory report (never blocks,
   never edits): JOURNAL length and mean/last entry size, TODO and
@@ -25,6 +35,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **`coherence-validator` and `session-reviewer` run from `/jarpa:review`
+  only**, in parallel, reporting only findings the review has not already
+  made. The managed CLAUDE.md block says so: run `/jarpa:upgrade` to
+  resync it.
 - **Methodology: PLAN holds direction, TODO holds work.** Planned but
   not-yet-started tasks live in TODO (Next/Later); PROJECT_PLAN carries only
   goal, milestones, steps and current step. Templates carry the rule.

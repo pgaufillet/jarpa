@@ -43,7 +43,7 @@ cheap guardrail against a recurring and dangerous failure mode.
 ```
 .claude-plugin/plugin.json    # Plugin manifest
 commands/                      # Slash commands (jarpa:init, jarpa:status, etc.)
-agents/                        # Sub-agents (journal-validator, coherence-validator, session-reviewer) — reserved for autonomous reviews; synchronous workflows run inline in commands/
+agents/                        # Sub-agents (journal-validator for archiving; coherence-validator, session-reviewer from /jarpa:review) — synchronous workflows run inline in commands/
 skills/                        # Skills (jarpa-methodology, jarpa-housekeeping)
 hooks/                         # Hook definitions and scripts
 statusline/                    # Statusline script (statusline.sh)

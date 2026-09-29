@@ -149,6 +149,7 @@ Run it by hand at any time: `bash <plugin-root>/hooks/scripts/metrics.sh [projec
 | `/jarpa:session-end` | End-of-session documentation (also triggered automatically) |
 | `/jarpa:archive` | Archive older journal entries when JOURNAL.md grows large |
 | `/jarpa:status` | Show current project status |
+| `/jarpa:review` | Periodic review of project, document and method drift; every finding closed |
 | `/jarpa:upgrade` | Upgrade consumer jarpa/ files to the current on-disk format and resync the managed CLAUDE.md block |
 | `/jarpa:test-installation` | Verify the plugin is installed correctly |
 

@@ -510,7 +510,7 @@ test_commands() {
 
     assert_dir_exists "$PLUGIN_ROOT/commands" "commands/ directory exists"
 
-    local expected_commands=("init" "archive" "session-end" "status" "test-installation" "upgrade")
+    local expected_commands=("init" "archive" "session-end" "status" "test-installation" "upgrade" "review")
 
     for cmd in "${expected_commands[@]}"; do
         assert_file_exists "$PLUGIN_ROOT/commands/$cmd.md" "Command $cmd.md exists"
@@ -659,6 +659,17 @@ test_integration() {
     if grep -l "journal-validator" "$PLUGIN_ROOT/commands"/*.md >/dev/null 2>&1; then
         assert_file_exists "$PLUGIN_ROOT/agents/journal-validator.md" "Referenced agent journal-validator exists"
     fi
+
+    # Review command: invokes both validators; its JOURNAL title is the
+    # contract session-start relies on to find the last review.
+    log_info "Checking review contract..."
+    local review_cmd="$PLUGIN_ROOT/commands/review.md"
+    for agent in coherence-validator session-reviewer; do
+        assert_contains "$review_cmd" "\`$agent\`" "review invokes $agent"
+        assert_contains "$PLUGIN_ROOT/agents/$agent.md" "From \`/jarpa:review\` only" "$agent is scoped to the review"
+    done
+    assert_contains "$review_cmd" "Session N: JARPA review" "review defines its JOURNAL title"
+    assert_contains "$PLUGIN_ROOT/skills/jarpa-methodology/SKILL.md" "Session N: JARPA review" "methodology states the review title"
 
     # Upgrade command: managed CLAUDE.md block resync contract
     log_info "Checking upgrade block-resync contract..."
