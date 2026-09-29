@@ -92,8 +92,9 @@ Each `[!!]` line is a finding to verify and close.
   - Exit criteria or commitments with no progress in the window; deadlines
     with no action.
   - Sessions off the Current Step, and whether the plan should follow them.
-  - Temporary plans (sprint, run-sheet, `jarpa-status: temporary`
-    satellites) without a due date or past it.
+  - Temporary plans without a due date or past it: `jarpa-status:
+    temporary` satellites (the metrics flag them), and sprint or run-sheet
+    sections kept inside TODO or PROJECT_PLAN.
 - **Documents** — content in the wrong file or no longer true.
   - Narrative or backlog in PROJECT_PLAN; new needs appearing only in TODO;
     decisions recorded only in JOURNAL that ARCHITECTURE should carry.

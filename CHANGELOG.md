@@ -38,6 +38,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (6000), `thresholds.todo_bytes` (30000), `thresholds.plan_bytes` (15000).
 - **Satellite status marker.** Other files in `jarpa/` declare
   `<!-- jarpa-status: living|snapshot|temporary -->` in their first lines.
+  A temporary one carries a due date
+  (`<!-- jarpa-status: temporary, due: YYYY-MM-DD -->`); the hygiene report
+  flags it when the date is missing or past.
 
 ### Changed
 

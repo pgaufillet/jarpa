@@ -122,19 +122,32 @@ for f in ARCHITECTURE.md REQUIREMENTS.md; do
 done
 
 # --- Satellites: any other jarpa/*.md needs a status marker in its head.
+# A temporary one carries a due date: "temporary, due: YYYY-MM-DD".
 satellites=0
 unmarked=()
 temporary=0
+undated=()
+overdue=()
+today=$(date +%F)
 for f in "$JARPA"/*.md; do
     [[ -f "$f" ]] || continue
     case "$(basename "$f")" in
         PROJECT_PLAN.md|TODO.md|REQUIREMENTS.md|ARCHITECTURE.md|JOURNAL.md|CLAUDE.md) continue ;;
     esac
     satellites=$((satellites + 1))
-    status=$(head -5 "$f" | sed -n 's/.*<!-- jarpa-status: *\([a-z]*\) *-->.*/\1/p' | head -1)
+    marker=$(head -5 "$f" | sed -n 's/.*<!-- jarpa-status: *\([^>]*[^ ]\) *-->.*/\1/p' | head -1)
+    status=${marker%%,*}
     case "$status" in
         living|snapshot) ;;
-        temporary) temporary=$((temporary + 1)) ;;
+        temporary)
+            temporary=$((temporary + 1))
+            due=$(sed -n 's/.*due: *\([0-9-]*\).*/\1/p' <<< "$marker")
+            if [[ ! "$due" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+                undated+=("$(basename "$f")")
+            elif [[ "$due" < "$today" ]]; then
+                overdue+=("$(basename "$f") $due")
+            fi
+            ;;
         *) unmarked+=("$(basename "$f")") ;;
     esac
 done
@@ -147,6 +160,13 @@ if (( satellites > 0 )); then
         ok "satellites: $satellites, all with a jarpa-status marker"
     fi
     (( temporary > 0 )) && info "temporary satellites: $temporary (delete once consumed)"
+    if (( ${#undated[@]} > 0 )); then
+        warn "temporary satellites without a due date: ${undated[*]} — add \", due: YYYY-MM-DD\" to the marker"
+    fi
+    if (( ${#overdue[@]} > 0 )); then
+        list=$(printf '%s, ' "${overdue[@]}")
+        warn "temporary satellites past due: ${list%, } — consume and delete, or reschedule"
+    fi
 fi
 
 # --- Session references in commits of the project's code repositories:

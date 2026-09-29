@@ -892,6 +892,16 @@ test_metrics() {
     out=$(_run_metrics "$mini")
     _check "All satellites marked: accepted" _has "[ok] satellites: 3, all with a jarpa-status marker"
 
+    # Temporary satellites carry a due date: missing or past is flagged.
+    _check "Temporary satellite without a due date flagged" _has "[!!] temporary satellites without a due date: sprint-plan.md"
+    printf '<!-- jarpa-status: temporary, due: 2020-01-31 -->\n# Sprint plan\n' > "$mini/jarpa/sprint-plan.md"
+    out=$(_run_metrics "$mini")
+    _check "Dated temporary marker still counts as a marker" _has "[ok] satellites: 3, all with a jarpa-status marker"
+    _check "Temporary satellite past due flagged with its date" _has "[!!] temporary satellites past due: sprint-plan.md 2020-01-31"
+    printf '<!-- jarpa-status: temporary, due: 2099-12-31 -->\n# Sprint plan\n' > "$mini/jarpa/sprint-plan.md"
+    out=$(_run_metrics "$mini")
+    _check "Temporary satellite due in the future not flagged" bash -c '[[ "$1" != *"past due"* && "$1" != *"without a due date"* ]]' _ "$out"
+
     # Managed block states.
     _run_block() { out=$(_run_metrics "$mini"); }
     rm -f "$mini/CLAUDE.md"; _run_block

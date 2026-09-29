@@ -36,7 +36,9 @@ removed deliberately:
 
 - `<!-- jarpa-status: living -->` — kept current, like the core files.
 - `<!-- jarpa-status: snapshot -->` — dated record, never updated.
-- `<!-- jarpa-status: temporary -->` — deleted once consumed.
+- `<!-- jarpa-status: temporary, due: YYYY-MM-DD -->` — a temporary plan
+  (sprint, run-sheet), deleted once consumed. The due date is mandatory;
+  past it, consume the plan or reschedule it explicitly.
 
 ## Working Session Definition
 
