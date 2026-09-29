@@ -83,7 +83,22 @@ Read threshold from `.claude/jarpa.local.md` (`thresholds.journal_lines`,
 default: 1500). If the line count exceeds the threshold, suggest running
 `/jarpa:archive`. Do not archive automatically.
 
-### Step 5: Context awareness during the session
+### Step 5: Check whether a review is due
+
+```bash
+bash "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/review-due.sh"
+```
+
+The script finds the last `Session N: JARPA review` entry (archives
+included) and reports a review due after `review_interval_sessions`
+sessions (default 15), after a pause of more than `review_pause_days` days
+(default 30), or when PROJECT_PLAN's milestones changed since the review.
+
+On a `[!!]` line, announce it in the summary — "Review due: <reason>. Run
+`/jarpa:review` when ready (a dedicated session)." — and continue with the
+current task. **Never start the review yourself**: the operator decides.
+
+### Step 6: Context awareness during the session
 
 During long sessions, watch the JARPA statusline gauge:
 - At 75% (WARNING), recommend planning session closure.

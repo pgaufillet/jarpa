@@ -17,8 +17,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Every finding is verified before it is relayed, classed as
   *would-decide-wrong* (naming the decision it would mislead) or *stock*,
   and closed: fixed, scheduled in TODO with a date, or refused. Its JOURNAL
-  entry, titled `Session N: JARPA review`, records the model used and the
-  scheduled items the next review starts from.
+  entry, titled `Session N: JARPA review`, records the model used, the
+  milestones, and the scheduled items the next review starts from.
+- **Review announcement at session start.** `/jarpa:session-start` runs
+  `hooks/scripts/review-due.sh` and announces a review due — never runs
+  it — after `thresholds.review_interval_sessions` sessions (15), after a
+  pause of more than `thresholds.review_pause_days` days (30), or when
+  PROJECT_PLAN's milestones changed since the last review. The last review
+  is found by its JOURNAL title, archived journals included; no state file.
 - **Hygiene report at session end.** `/jarpa:session-end` runs
   `hooks/scripts/metrics.sh` and relays an advisory report (never blocks,
   never edits): JOURNAL length and mean/last entry size, TODO and

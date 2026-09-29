@@ -141,6 +141,23 @@ line counts are skewed by wrapping.
 
 Run it by hand at any time: `bash <plugin-root>/hooks/scripts/metrics.sh [project-dir]`.
 
+## Periodic Review
+
+`/jarpa:review` is a dedicated session that checks project, document and
+method drift since the previous review and closes every finding: fixed,
+scheduled in TODO with a date, or refused. Session start announces it when
+due and never runs it:
+
+| Trigger | Setting (`.claude/jarpa.local.md`) |
+|---|---|
+| Sessions since the last review (or since the start) | `thresholds.review_interval_sessions` (15) |
+| Gap between two sessions, or since the last one, after the last review | `thresholds.review_pause_days` (30) |
+| PROJECT_PLAN milestone lines differ from those the last review recorded | — |
+
+The last review is the last JOURNAL entry titled `Session N: JARPA review`,
+archived journals included. Check by hand:
+`bash <plugin-root>/hooks/scripts/review-due.sh [project-dir]`.
+
 ## Commands
 
 | Command | Description |

@@ -132,7 +132,8 @@ archive older sessions to `jarpa/archive/`. Keep 5-10 recent sessions in active 
 
 ### Periodic Review
 `/jarpa:review` runs as a dedicated session when session start announces it
-due. It checks project, document and method drift; every finding is fixed,
+due (every 15 sessions, after a pause of over 30 days, or on a milestone
+change). It checks project, document and method drift; every finding is fixed,
 scheduled in TODO with a date, or refused, and the next review starts from
 the scheduled ones. Its JOURNAL entry is titled `Session N: JARPA review`.
 

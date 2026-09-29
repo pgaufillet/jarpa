@@ -10,7 +10,7 @@
 #   ./tests/test_plugin.sh -v        # Verbose output
 #   ./tests/test_plugin.sh manifest  # Run specific test group
 #
-# Test groups: manifest, hooks, statusline, agents, commands, skills, templates, scripts, metrics
+# Test groups: manifest, hooks, statusline, agents, commands, skills, templates, scripts, metrics, review
 #
 
 set -euo pipefail
@@ -614,7 +614,7 @@ test_scripts() {
 
     assert_dir_exists "$PLUGIN_ROOT/hooks/scripts" "hooks/scripts/ directory exists"
 
-    local expected_scripts=("session-start.sh" "session-end.sh" "pre-compact.sh" "pre-commit.sh" "metrics.sh")
+    local expected_scripts=("session-start.sh" "session-end.sh" "pre-compact.sh" "pre-commit.sh" "metrics.sh" "review-due.sh")
 
     for script in "${expected_scripts[@]}"; do
         local script_path="$PLUGIN_ROOT/hooks/scripts/$script"
@@ -1010,6 +1010,146 @@ test_metrics() {
     rm -rf "$tmp"
 }
 
+test_review() {
+    echo ""
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo " Review Announcement Tests"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+    local script="$PLUGIN_ROOT/hooks/scripts/review-due.sh"
+    local tmp
+    tmp=$(mktemp -d)
+    local out rc
+
+    _run_review() { env -u CLAUDE_PROJECT_DIR bash "$script" "$@"; }
+
+    _check() {
+        local desc="$1"; shift
+        TESTS_RUN=$((TESTS_RUN + 1))
+        if "$@"; then
+            TESTS_PASSED=$((TESTS_PASSED + 1))
+            log_success "$desc"
+        else
+            TESTS_FAILED=$((TESTS_FAILED + 1))
+            log_fail "$desc"
+            log_verbose "  output: $out"
+        fi
+    }
+
+    _has()   { [[ "$out" == *"$1"* ]]; }
+    _hasnt() { [[ "$out" != *"$1"* ]]; }
+
+    # Sessions first..last, one per day from 2026-01-01; the session named
+    # by the third argument (if any) is a review.
+    _sessions() {
+        local i
+        for ((i = $1; i <= $2; i++)); do
+            if [[ "$i" == "${3:-}" ]]; then
+                printf '## [2026-01-%02d] — Session %d: JARPA review\n' "$i" "$i"
+            else
+                printf '## [2026-01-%02d] — Session %d: Work\n' "$i" "$i"
+            fi
+            echo "### Goal"
+        done
+    }
+
+    local p="$tmp/cadence"
+    mkdir -p "$p/jarpa" "$p/.claude"
+
+    # Cadence: 15 sessions after the review is due, 14 is not.
+    _sessions 1 20 5 > "$p/jarpa/JOURNAL.md"
+    out=$(_run_review "$p" --today 2026-01-21); rc=$?
+    _check "Cadence: 15 sessions since the review is due" _has "[!!] review due — 15 sessions since the last review (Session 5, 2026-01-05); every 15"
+    _check "Exit code 0 when a review is due" [ "$rc" -eq 0 ]
+    _sessions 1 20 6 > "$p/jarpa/JOURNAL.md"
+    out=$(_run_review "$p" --today 2026-01-21)
+    _check "Cadence: 14 sessions since the review is not due" _has "[ok] no review due — 14 sessions since the last review (Session 6, 2026-01-06); every 15"
+    printf -- '---\nthresholds:\n  review_interval_sessions: 10\n---\n' > "$p/.claude/jarpa.local.md"
+    out=$(_run_review "$p" --today 2026-01-21)
+    _check "Cadence setting review_interval_sessions is read" _has "[!!] review due — 14 sessions since the last review (Session 6, 2026-01-06); every 10"
+    rm "$p/.claude/jarpa.local.md"
+
+    # The last review wins; other titles mentioning "review" do not count.
+    { _sessions 1 20 3; printf '## [2026-01-21] — Session 21: Code review of the parser\n## [2026-01-22] — Session 22: JARPA upgrade\n'; } > "$p/jarpa/JOURNAL.md"
+    sed -i 's/Session 12: Work/Session 12: JARPA review/' "$p/jarpa/JOURNAL.md"
+    out=$(_run_review "$p" --today 2026-01-22)
+    _check "Last review found among several" _has "10 sessions since the last review (Session 12,"
+    _check "Titles other than 'JARPA review' are not reviews" bash -c '[[ "$1" != *"Session 21,"* && "$1" != *"Session 22,"* ]]' _ "$out"
+
+    # No review yet: counted from the start.
+    _sessions 1 3 > "$p/jarpa/JOURNAL.md"
+    out=$(_run_review "$p" --today 2026-01-04)
+    _check "No review yet, few sessions: not due" _has "[ok] no review due — 3 sessions since the start (no review yet)"
+
+    # A review moved to the archive is still found.
+    mkdir -p "$p/jarpa/archive"
+    _sessions 1 8 4 > "$p/jarpa/archive/JOURNAL_2026-01.md"
+    _sessions 9 12 > "$p/jarpa/JOURNAL.md"
+    out=$(_run_review "$p" --today 2026-01-13)
+    _check "Review in an archived journal is found" _has "8 sessions since the last review (Session 4, 2026-01-04)"
+    # Other archive files (reports, snapshots) are not journals.
+    _sessions 1 30 25 > "$p/jarpa/archive/REX_2026-01.md"
+    out=$(_run_review "$p" --today 2026-01-13)
+    _check "Non-journal archive files are ignored" _has "(Session 4, 2026-01-04)"
+    rm -rf "$p/jarpa/archive"
+
+    # Legacy "## Session N" headers count as sessions.
+    { printf '## Session 1: Old\n## Session 2: JARPA review\n'; for i in $(seq 3 17); do printf '## Session %d: Old\n' "$i"; done; } > "$p/jarpa/JOURNAL.md"
+    out=$(_run_review "$p" --today 2026-01-04)
+    _check "Legacy undated headers count for the cadence" _has "[!!] review due — 15 sessions since the last review (Session 2, -)"
+    _check "Legacy undated headers raise no pause" _hasnt "pause"
+
+    # Pause: a gap over review_pause_days between sessions after the review.
+    local q="$tmp/pause"
+    mkdir -p "$q/jarpa" "$q/.claude"
+    printf '## [2026-01-01] — Session 1: JARPA review\n## [2026-01-02] — Session 2: A\n## [2026-02-02] — Session 3: B\n' > "$q/jarpa/JOURNAL.md"
+    out=$(_run_review "$q" --today 2026-02-03)
+    _check "Pause: 31-day gap between sessions is due" _has "[!!] review due — resumed after a 31-day pause (2026-01-02 to 2026-02-02); pause over 30 days"
+    printf '## [2026-01-01] — Session 1: JARPA review\n## [2026-01-02] — Session 2: A\n## [2026-02-01] — Session 3: B\n' > "$q/jarpa/JOURNAL.md"
+    out=$(_run_review "$q" --today 2026-02-02)
+    _check "Pause: 30-day gap is not due" _has "[ok] no review due"
+    out=$(_run_review "$q" --today 2026-03-15)
+    _check "Pause: gap between the last session and today counts" _has "resumed after a 42-day pause (2026-02-01 to today)"
+    printf -- '---\nthresholds:\n  review_pause_days: 20\n---\n' > "$q/.claude/jarpa.local.md"
+    out=$(_run_review "$q" --today 2026-02-02)
+    _check "Pause setting review_pause_days is read" _has "pause over 20 days"
+    rm "$q/.claude/jarpa.local.md"
+    printf '## [2025-06-01] — Session 1: A\n## [2026-01-01] — Session 2: JARPA review\n## [2026-01-05] — Session 3: B\n' > "$q/jarpa/JOURNAL.md"
+    out=$(_run_review "$q" --today 2026-01-06)
+    _check "Pause before the last review is ignored" _has "[ok] no review due"
+    # Across a year boundary and February: 2025-12-31 to 2026-03-01 is 60 days.
+    printf '## [2025-12-31] — Session 1: JARPA review\n## [2026-03-01] — Session 2: A\n' > "$q/jarpa/JOURNAL.md"
+    out=$(_run_review "$q" --today 2026-03-01)
+    _check "Day count is exact across years and February" _has "60-day pause (2025-12-31 to 2026-03-01)"
+
+    # Milestones: compared with the lines the last review recorded.
+    local m="$tmp/milestones"
+    mkdir -p "$m/jarpa"
+    printf '# Plan\n## Milestones\n1. **Core** (Complete)\n   - Success criteria: x\n2. **Next** (In Progress)\n   - Progress: a\n\n## Current Step\n1. not a milestone\n' > "$m/jarpa/PROJECT_PLAN.md"
+    out=$(_run_review "$m" --milestones)
+    _check "--milestones prints the top-level milestone lines" [ "$out" == $'- Milestone: 1. **Core** (Complete)\n- Milestone: 2. **Next** (In Progress)' ]
+    { printf '## [2026-01-01] — Session 1: JARPA review\n### Goal\n'; _run_review "$m" --milestones; printf '## [2026-01-02] — Session 2: A\n'; } > "$m/jarpa/JOURNAL.md"
+    out=$(_run_review "$m" --today 2026-01-03)
+    _check "Milestones unchanged: not due" _has "[ok] no review due"
+    sed -i 's/   - Progress: a/   - Progress: b/' "$m/jarpa/PROJECT_PLAN.md"
+    out=$(_run_review "$m" --today 2026-01-03)
+    _check "Sub-bullet edit is not a milestone change" _has "[ok] no review due"
+    sed -i 's/\*\*Next\*\* (In Progress)/**Next** (Complete)/' "$m/jarpa/PROJECT_PLAN.md"
+    out=$(_run_review "$m" --today 2026-01-03)
+    _check "Milestone status change is due" _has "[!!] review due — milestones changed since the last review (Session 1)"
+    printf '## [2026-01-01] — Session 1: JARPA review\n### Goal\n## [2026-01-02] — Session 2: A\n' > "$m/jarpa/JOURNAL.md"
+    out=$(_run_review "$m" --today 2026-01-03)
+    _check "Review without recorded milestones is not compared" _has "[ok] no review due"
+
+    # No journal: explicit note, still exit 0.
+    mkdir -p "$tmp/empty/jarpa"
+    out=$(_run_review "$tmp/empty"); rc=$?
+    _check "Missing JOURNAL.md is reported and exits 0" bash -c '[[ "$1" == *"no jarpa/JOURNAL.md"* && "$2" -eq 0 ]]' _ "$out" "$rc"
+
+    unset -f _run_review _check _has _hasnt _sessions
+    rm -rf "$tmp"
+}
+
 # ============================================================================
 # MAIN
 # ============================================================================
@@ -1045,6 +1185,7 @@ main() {
         scripts)   test_scripts ;;
         integration) test_integration ;;
         metrics)   test_metrics ;;
+        review)    test_review ;;
         all)
             test_manifest
             test_hooks
@@ -1056,10 +1197,11 @@ main() {
             test_scripts
             test_integration
             test_metrics
+            test_review
             ;;
         *)
             echo "Unknown test group: $TEST_GROUP"
-            echo "Available groups: manifest, hooks, statusline, agents, commands, skills, templates, scripts, integration, metrics, all"
+            echo "Available groups: manifest, hooks, statusline, agents, commands, skills, templates, scripts, integration, metrics, review, all"
             exit 1
             ;;
     esac

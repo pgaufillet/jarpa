@@ -51,9 +51,11 @@ schedule it first in TODO.
 
 ### Step 1: Locate the window and the previous review
 
-Find the last review in `jarpa/JOURNAL.md`: the last header matching
-`## [YYYY-MM-DD] — Session N: JARPA review`. The window is the entries after
-it; without a previous review, the last 15 entries.
+Find the last review: the last header matching
+`## [YYYY-MM-DD] — Session N: JARPA review` in `jarpa/JOURNAL.md`, or in
+`jarpa/archive/JOURNAL*.md` if it was archived. The window is the entries
+after it; without a previous review, the last `review_interval_sessions`
+entries (default 15).
 
 Read `jarpa/PROJECT_PLAN.md`, `jarpa/TODO.md` and the window's entries.
 
@@ -149,7 +151,12 @@ this exact title so the next review and session-start can find it:
 ## [YYYY-MM-DD] — Session N: JARPA review
 ```
 
-- **Goal**: the window (sessions and dates) and `Model: <model id>`.
+- **Goal**: the window (sessions and dates), `Model: <model id>`, and the
+  milestone lines printed by
+  `bash "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/review-due.sh" --milestones`,
+  copied as they are (one `- Milestone:` line each), after the closures
+  have updated PROJECT_PLAN. Session-start compares them with PROJECT_PLAN
+  to announce the next review on a milestone change.
 - **Results**: the findings table with their closures; the number of
   validator findings dropped.
 - **Remaining Work / Next Step**: the scheduled items with their dates —
