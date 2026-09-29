@@ -40,8 +40,9 @@ Each finding carries:
   finding is *stock*. *Stock* is housekeeping: true but misleading no one.
 - **Evidence** — as above.
 - **Closure** — exactly one of: **fixed** during the review, **scheduled**
-  as a TODO item with a date the operator validated, or **refused** with a
-  one-line reason. No finding leaves the review open.
+  as a TODO item, or **refused** with a one-line reason. No finding leaves
+  the review open. A scheduled item is re-examined at the next review; give
+  it a date only when the project works with dates.
 
 A finding already raised by the previous review (scheduled, refused, or not
 closed) is marked **seen twice** and becomes a priority: fix it now or
@@ -62,8 +63,8 @@ Read `jarpa/PROJECT_PLAN.md`, `jarpa/TODO.md` and the window's entries.
 ### Step 2: Carry over the previous review
 
 List the previous review's scheduled items (its `Remaining Work / Next
-Step` section) with their dates and state: done, overdue, or pending.
-Overdue items are the first findings of this review.
+Step` section) with their state: done or still pending, and past its date
+when it has one. Pending items are the first findings of this review.
 
 ### Step 3: Ask the open question
 
@@ -89,12 +90,13 @@ Each `[!!]` line is a finding to verify and close.
 
 - **Project** — plan vs sessions of the window.
   - Age of the Current Step: sessions since it last changed.
-  - Exit criteria or commitments with no progress in the window; deadlines
-    with no action.
+  - Exit criteria or commitments with no progress in the window; declared
+    deadlines, if any, with no action.
   - Sessions off the Current Step, and whether the plan should follow them.
-  - Temporary plans without a due date or past it: `jarpa-status:
-    temporary` satellites (the metrics flag them), and sprint or run-sheet
-    sections kept inside TODO or PROJECT_PLAN.
+  - Temporary plans still alive: `jarpa-status: temporary` satellites and
+    sprint or run-sheet sections kept inside TODO or PROJECT_PLAN — consumed,
+    or still needed? Past their date when they have one (the metrics flag
+    those satellites).
 - **Documents** — content in the wrong file or no longer true.
   - Narrative or backlog in PROJECT_PLAN; new needs appearing only in TODO;
     decisions recorded only in JOURNAL that ARCHITECTURE should carry.
@@ -105,7 +107,7 @@ Each `[!!]` line is a finding to verify and close.
   jarpa-methodology skill).
   - Rules in `CLAUDE.md` outside the managed block, and conventions visible
     in `jarpa/`, that contradict or extend the canonical rules; a local rule
-    on trial has a review date.
+    on trial says when it is re-examined (next review by default).
   - Rules written for a specific model.
   - Session references in commits (from the metrics).
 - **Retro** — ask the operator what helped and what hindered in the window;
@@ -137,7 +139,7 @@ Present the findings as one table, would-decide-wrong first:
 ```
 
 The operator decides each closure. Apply the fixes, add the scheduled
-items to TODO with their dates, record the refusals.
+items to TODO (with a date if the operator gives one), record the refusals.
 
 **Cadence.** Propose a change only on evidence: tighten
 (`review_interval_sessions` in `.claude/jarpa.local.md`, default 15) after a
@@ -160,8 +162,8 @@ this exact title so the next review and session-start can find it:
   to announce the next review on a milestone change.
 - **Results**: the findings table with their closures; the number of
   validator findings dropped.
-- **Remaining Work / Next Step**: the scheduled items with their dates —
-  the next review starts from this list.
+- **Remaining Work / Next Step**: the scheduled items (and their dates, if
+  any) — the next review starts from this list.
 
 Update TODO and PROJECT_PLAN as the closures require. The operator ratifies
 the entry.

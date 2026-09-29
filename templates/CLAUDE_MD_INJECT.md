@@ -13,7 +13,7 @@ This project uses JARPA for structured documentation.
 
 ### Periodic Review
 
-`/jarpa:review` is a dedicated session that checks project, document and method drift and closes every finding (fixed, scheduled with a date, or refused). Session start announces when it is due; the operator starts it. The read-only agents **coherence-validator** and **session-reviewer** are invoked from the review only.
+`/jarpa:review` is a dedicated session that checks project, document and method drift and closes every finding (fixed, scheduled for the next review, or refused). Session start announces when it is due; the operator starts it. The read-only agents **coherence-validator** and **session-reviewer** are invoked from the review only.
 
 For full methodology, see the jarpa-methodology skill.
 <!-- JARPA:END -->

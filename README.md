@@ -135,7 +135,7 @@ line counts are skewed by wrapping.
 | `[ONGOING]` markers (at line start or in a heading) | more than 1 | — |
 | ARCHITECTURE.md, REQUIREMENTS.md size | never — reported for information (read on demand, not at session start) | — |
 | Satellite files in `jarpa/` | no `<!-- jarpa-status: living\|snapshot\|temporary -->` in their first lines | — |
-| Temporary satellites | no due date (`<!-- jarpa-status: temporary, due: YYYY-MM-DD -->`), or past it | — |
+| Temporary satellites with a due date (`<!-- jarpa-status: temporary, due: YYYY-MM-DD -->`, optional) | past it | — |
 | Session references in commits | any, in the last 30 days or the last 10 JOURNAL entries (whichever is longer, so a pause does not hide them), by you, in the project repository and its direct sub-directory repositories (a `jarpa/` repository is excluded); the date of the latest one is shown | — |
 | Managed CLAUDE.md block | absent, malformed or stale | — |
 | Claude Code auto-memory | enabled (env var, then local > project > user settings; absent = enabled) and holding `project` or `reference` memories — preferences only (`user`, `feedback`) are accepted | — |
@@ -146,7 +146,8 @@ Run it by hand at any time: `bash <plugin-root>/hooks/scripts/metrics.sh [projec
 
 `/jarpa:review` is a dedicated session that checks project, document and
 method drift since the previous review and closes every finding: fixed,
-scheduled in TODO with a date, or refused. Session start announces it when
+scheduled in TODO (re-examined at the next review, with a date if your
+project uses dates), or refused. Session start announces it when
 due and never runs it:
 
 | Trigger | Setting (`.claude/jarpa.local.md`) |

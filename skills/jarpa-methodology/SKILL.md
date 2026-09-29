@@ -36,9 +36,10 @@ removed deliberately:
 
 - `<!-- jarpa-status: living -->` — kept current, like the core files.
 - `<!-- jarpa-status: snapshot -->` — dated record, never updated.
-- `<!-- jarpa-status: temporary, due: YYYY-MM-DD -->` — a temporary plan
-  (sprint, run-sheet), deleted once consumed. The due date is mandatory;
-  past it, consume the plan or reschedule it explicitly.
+- `<!-- jarpa-status: temporary -->` — a temporary plan (sprint,
+  run-sheet), deleted once consumed; the periodic review asks whether it
+  still is needed. Projects that work with dates add one
+  (`temporary, due: YYYY-MM-DD`); past it, consume or reschedule.
 
 ## Working Session Definition
 
@@ -136,7 +137,7 @@ archive older sessions to `jarpa/archive/`. Keep 5-10 recent sessions in active 
 `/jarpa:review` runs as a dedicated session when session start announces it
 due (every 15 sessions, after a pause of over 30 days, or on a milestone
 change). It checks project, document and method drift; every finding is fixed,
-scheduled in TODO with a date, or refused, and the next review starts from
+scheduled in TODO (with a date only if the project uses dates), or refused, and the next review starts from
 the scheduled ones. Its JOURNAL entry is titled `Session N: JARPA review`.
 
 ## Context Management

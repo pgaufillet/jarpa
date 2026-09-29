@@ -16,7 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the operator an open question on the next sessions and a short retro.
   Every finding is verified before it is relayed, classed as
   *would-decide-wrong* (naming the decision it would mislead) or *stock*,
-  and closed: fixed, scheduled in TODO with a date, or refused. Its JOURNAL
+  and closed: fixed, scheduled in TODO (re-examined at the next review; a
+  date is optional), or refused. Its JOURNAL
   entry, titled `Session N: JARPA review`, records the model used, the
   milestones, and the scheduled items the next review starts from.
 - **Review announcement at session start.** `/jarpa:session-start` runs
@@ -38,9 +39,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (6000), `thresholds.todo_bytes` (30000), `thresholds.plan_bytes` (15000).
 - **Satellite status marker.** Other files in `jarpa/` declare
   `<!-- jarpa-status: living|snapshot|temporary -->` in their first lines.
-  A temporary one carries a due date
+  A temporary one may carry a due date
   (`<!-- jarpa-status: temporary, due: YYYY-MM-DD -->`); the hygiene report
-  flags it when the date is missing or past.
+  flags it once past. Without a date, the periodic review asks whether it is
+  still needed.
 
 ### Changed
 
