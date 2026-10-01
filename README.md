@@ -137,10 +137,12 @@ line counts are skewed by wrapping.
 | Satellite files in `jarpa/` | no `<!-- jarpa-status: living\|snapshot\|temporary -->` in their first lines | — |
 | Temporary satellites with a due date (`<!-- jarpa-status: temporary, due: YYYY-MM-DD -->`, optional) | past it | — |
 | Session references in commits | any, in the last 30 days or the last 10 JOURNAL entries (whichever is longer, so a pause does not hide them), by you, in the project repository and its direct sub-directory repositories (a `jarpa/` repository is excluded); the date of the latest one is shown | — |
-| Managed CLAUDE.md block | absent, malformed or stale | — |
+| Managed CLAUDE.md block | absent, malformed or stale | `claude_md.managed_block: false` declares a project without it |
 | Claude Code auto-memory | enabled (env var, then local > project > user settings; absent = enabled) and holding `project` or `reference` memories — preferences only (`user`, `feedback`) are accepted | — |
 
 Run it by hand at any time: `bash <plugin-root>/hooks/scripts/metrics.sh [project-dir]`.
+`--since <date>` limits the journal entry sizes and the commit scan to a
+window; `/jarpa:review` passes the date of its first entry.
 
 ## Periodic Review
 

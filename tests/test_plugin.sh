@@ -832,6 +832,29 @@ test_metrics() {
     out=$(_run_metrics "$j")
     _check "Legacy session headers counted as entries" _has "journal entries: 2"
 
+    # --since scopes entry sizes to the window: the oversized old entry and
+    # the undated legacy one before the window are left out; an undated
+    # entry inside the window counts with it.
+    {
+        echo "## Session 0: legacy before the window"
+        _repeat "$(printf '%0200d' 0)" 60
+        echo "## [2026-01-01] — Session 1: oversized, before the window"
+        _repeat "$(printf '%0200d' 0)" 60
+        echo "## [2026-03-01] — Session 2: in the window"
+        _repeat "$(printf '%099d' 0)" 9
+        echo "## Session 3: legacy in the window"
+        _repeat "$(printf '%099d' 0)" 9
+    } > "$j/jarpa/JOURNAL.md"
+    out=$(_run_metrics "$j")
+    _check "Without --since, entry sizes cover the whole journal" _has "[!!] journal entries: 4"
+    out=$(_run_metrics "$j" --since 2026-02-01)
+    _check "--since scopes entry sizes to the window" _has "[ok] journal entries since 2026-02-01: 2"
+    out=$(_run_metrics "$j" --since "$(date -d '2026-02-01 + 2 days' +%F)")
+    _check "--since date equal to no header still splits entries" _has "journal entries since 2026-02-03: 2"
+    out=$(_run_metrics "$j" --since "not a date")
+    _check "Unparsable --since: whole journal, said so" _has "not understood by date"
+    _check "Unparsable --since: entries counted over the whole file" _has "[!!] journal entries: 4"
+
     # Journal line threshold drives the archive recommendation.
     { echo "## [2026-01-01] — Session 1: A"; _repeat "x" 1600; } > "$j/jarpa/JOURNAL.md"
     out=$(_run_metrics "$j")
@@ -912,6 +935,17 @@ test_metrics() {
     _check "Drifted block flagged stale" _has "managed block: stale"
     { echo "# Project"; cat "$template"; echo "Consumer prose"; } > "$mini/CLAUDE.md"; _run_block
     _check "Current block with consumer prose around it is up to date" _has "managed block: up to date"
+    # A project without the block by design declares it.
+    rm -f "$mini/CLAUDE.md"
+    mkdir -p "$mini/.claude"
+    printf -- '---\nclaude_md:\n  managed_block: false  # applies the SKILL directly\n---\n' > "$mini/.claude/jarpa.local.md"
+    _run_block
+    _check "Declared managed_block: false reported, not flagged" _has "[--] CLAUDE.md managed block: none (managed_block: false)"
+    _check "Declared managed_block: false is not 'absent'" _hasnt "managed block: absent"
+    printf -- '---\nclaude_md:\n  managed_block: true\n---\n' > "$mini/.claude/jarpa.local.md"
+    _run_block
+    _check "managed_block: true keeps the absent check" _has "[!!] CLAUDE.md managed block: absent"
+    rm -f "$mini/.claude/jarpa.local.md"
 
     # Auto-memory resolution: env var, then local > project > user; absent = on.
     local a="$tmp/memory"

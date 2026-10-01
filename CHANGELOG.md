@@ -35,8 +35,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   in commits of the project repository and its direct sub-directory
   repositories over the last 30 days or 10 JOURNAL entries, whichever is
   longer, managed CLAUDE.md block state, and Claude Code auto-memory state
-  (flagged only when it holds project or reference memories). New settings: `thresholds.journal_entry_bytes`
-  (6000), `thresholds.todo_bytes` (30000), `thresholds.plan_bytes` (15000).
+  (flagged only when it holds project or reference memories). `--since`
+  limits entry sizes and the commit scan to a window. New settings:
+  `thresholds.journal_entry_bytes` (6000), `thresholds.todo_bytes` (30000),
+  `thresholds.plan_bytes` (15000), and `claude_md.managed_block: false` for a
+  project without the managed block.
 - **Satellite status marker.** Other files in `jarpa/` declare
   `<!-- jarpa-status: living|snapshot|temporary -->` in their first lines.
   A temporary one may carry a due date

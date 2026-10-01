@@ -7,6 +7,8 @@
 # wrapping), TODO markers, session references in recent commits of the
 # project's code repositories, the managed CLAUDE.md block, the auto-memory
 # state and satellite status markers. Files absent from jarpa/ are skipped.
+# --since (used by /jarpa:review) scopes journal entry sizes and the commit
+# scan to its window.
 # Flagged lines start with "[!!]"; session-end relays the report as is.
 
 set -uo pipefail
@@ -59,11 +61,33 @@ fi
 if [[ -f "$JARPA/JOURNAL.md" ]]; then
     j_bytes=$(wc -c < "$JARPA/JOURNAL.md")
     j_lines=$(wc -l < "$JARPA/JOURNAL.md")
-    read -r n_entries mean_entry last_entry < <(LC_ALL=C awk '
-        /^## (\[|Session )/ { if (started) s[n++] = cur; started = 1; cur = 0 }
+    # With --since, entry sizes cover the window only (a review measures its
+    # window); an undated legacy header belongs with the entry before it.
+    since_date="" window=""
+    if [[ -n "$SINCE" ]]; then
+        if [[ "$SINCE" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+            since_date=$SINCE
+        else
+            since_date=$(date -d "$SINCE" +%F 2>/dev/null || true)
+        fi
+        if [[ -n "$since_date" ]]; then
+            window=" since $since_date"
+        else
+            info "--since \"$SINCE\" not understood by date: journal entries counted over the whole file"
+        fi
+    fi
+    read -r n_entries mean_entry last_entry < <(LC_ALL=C awk -v since="$since_date" '
+        /^## (\[|Session )/ {
+            if (started && keep) s[n++] = cur
+            started = 1; cur = 0
+            if (match($0, /^## \[[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]\]/))
+                keep = (since == "" || substr($0, 5, 10) >= since)
+            else if (since == "")
+                keep = 1
+        }
         started { cur += length($0) + 1 }
         END {
-            if (started) s[n++] = cur
+            if (started && keep) s[n++] = cur
             for (i = 0; i < n; i++) t += s[i]
             printf "%d %d %d\n", n, (n ? int(t / n) : 0), (n ? s[n - 1] : 0)
         }' "$JARPA/JOURNAL.md")
@@ -77,7 +101,7 @@ if [[ -f "$JARPA/JOURNAL.md" ]]; then
         ok "$msg"
     fi
 
-    msg="journal entries: $n_entries, mean $(kb "$mean_entry"), last $(kb "$last_entry") (target <= $(kb "$ENTRY_BYTES_MAX"))"
+    msg="journal entries$window: $n_entries, mean $(kb "$mean_entry"), last $(kb "$last_entry") (target <= $(kb "$ENTRY_BYTES_MAX"))"
     if (( last_entry > ENTRY_BYTES_MAX || mean_entry > ENTRY_BYTES_MAX )); then
         warn "$msg — keep entries lean"
     else
@@ -220,7 +244,13 @@ fi
 # --- Managed CLAUDE.md block vs the installed template.
 TEMPLATE="$PLUGIN_ROOT/templates/CLAUDE_MD_INJECT.md"
 CLAUDE_MD="$PROJECT_DIR/CLAUDE.md"
-if [[ -f "$TEMPLATE" ]]; then
+# A project that applies the methodology without the block declares it with
+# "managed_block: false".
+no_block=""
+[[ -f "$SETTINGS" ]] && no_block=$(sed -n 's/^[[:space:]]*managed_block:[[:space:]]*\(false\)[[:space:]]*\(#.*\)\{0,1\}$/\1/p' "$SETTINGS" | head -1)
+if [[ -n "$no_block" ]]; then
+    info "CLAUDE.md managed block: none (managed_block: false)"
+elif [[ -f "$TEMPLATE" ]]; then
     if [[ ! -f "$CLAUDE_MD" ]] || ! grep -q '^<!-- JARPA:BEGIN' "$CLAUDE_MD"; then
         warn "CLAUDE.md managed block: absent — run /jarpa:init"
     elif ! grep -q '^<!-- JARPA:END -->$' "$CLAUDE_MD"; then
