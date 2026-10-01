@@ -12,12 +12,14 @@ the methodology.
 
 Run it inline in the main conversation; only Step 5 uses sub-agents.
 `/jarpa:session-start` announces when a review is due and never runs it:
-the operator starts it.
+the operator starts it. When session-start already ran in this session (the
+SessionStart hook asks for it), do not run it again: its summary is where
+the review starts.
 
 **A review is a dedicated session.** No production work alongside it; fixes
 made during the review are limited to the findings the operator accepts.
 It ends with its own JOURNAL entry, which replaces `/jarpa:session-end` for
-this session.
+this session (Step 7 says which of its duties remain).
 
 ## Scope Discipline (MANDATORY)
 
@@ -56,7 +58,8 @@ Find the last review: the last header matching
 `## [YYYY-MM-DD] — Session N: JARPA review` in `jarpa/JOURNAL.md`, or in
 `jarpa/archive/JOURNAL*.md` if it was archived. The window is the entries
 after it; without a previous review, the last `review_interval_sessions`
-entries (default 15).
+entries (default 15). Older sessions stay unreviewed even when session-start
+counted them as due; the JOURNAL entry says so.
 
 Read `jarpa/PROJECT_PLAN.md`, `jarpa/TODO.md` and the window's entries.
 
@@ -66,19 +69,32 @@ List the previous review's scheduled items (its `Remaining Work / Next
 Step` section) with their state: done or still pending, and past its date
 when it has one. Pending items are the first findings of this review.
 
-### Step 3: Ask the open question
+### Step 3: Ask the operator — one message
 
-Before presenting the plan, ask the operator: **"What will the next
-sessions be about?"** Compare the answer with PROJECT_PLAN's Current Step
-and TODO's Now/Next. A gap between intent and plan is a project finding.
+Before presenting the plan, ask the three questions together, so the
+operator answers once:
 
-Never ask "does the plan match your intent?" — a closed question gets a yes
-and hides the drift.
+1. **The open question: "What will the next sessions be about?"** Never ask
+   "does the plan match your intent?" — a closed question gets a yes and
+   hides the drift.
+2. **The retro**: what helped and what hindered in the window; what to
+   stop, start, continue. On a long window (a first review, or one spanning
+   a pause), ask about its last sessions and name a few of its events as
+   prompts.
+3. **The validators of Step 5**: run them or not. They cost far more than
+   the rest of the review (on a 15-session window, about 150k tokens
+   against about 50k); give the estimate.
+
+Compare the answer to (1) with PROJECT_PLAN's Current Step and TODO's
+Now/Next: a gap between intent and plan is a project finding. Each retro
+answer that asks for a change is a retro finding; a retro left unanswered
+is noted in the JOURNAL entry, not counted as a finding.
 
 ### Step 4: Measured and judged parts
 
 **Measure.** Run the metrics script over the window (the date of its first
-entry):
+entry); journal entry sizes and session references in commits then cover
+the window only:
 
 ```bash
 bash "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/metrics.sh" --since <date>
@@ -110,25 +126,31 @@ Each `[!!]` line is a finding to verify and close.
     on trial says when it is re-examined (next review by default).
   - Rules written for a specific model.
   - Session references in commits (from the metrics).
-- **Retro** — ask the operator what helped and what hindered in the window;
-  what to stop, start, continue. Each answer that asks for a change is a
-  finding.
+- **Retro** — the findings from the answers to Step 3.
 
 ### Step 5: Validators — new findings only
+
+Only if the operator accepted them in Step 3; otherwise record that they
+were declined in the JOURNAL entry and go to Step 6.
 
 Launch both agents in parallel (a single message with two Agent calls):
 
 - `coherence-validator` — cross-document coherence.
 - `session-reviewer` — with the window of Step 1.
 
-Pass each the list of findings already made (one line each: family, file,
-claim) and ask it to report only findings not on that list, and to say when
-it contradicts one. Verify each new finding before relaying it; drop the
-ones that do not hold and say how many were dropped. A contradiction that
-holds corrects the earlier finding.
+Pass each:
 
-The validators cost far more than the rest of the review; if the operator
-declines them, record it in the JOURNAL entry.
+- the list of findings already made (one line each: family, file, claim),
+  asking it to report only findings not on that list and to say when it
+  contradicts one;
+- this review's Scope Discipline: `jarpa/` at the repository root, the root
+  `CLAUDE.md`, the project's repositories — never user configuration
+  (`~/.claude`) or other projects.
+
+Verify each new finding before relaying it: open the cited file at the cited
+line (a line number past the end of the file means the finding is not
+verified). Drop the ones that do not hold and say how many were dropped. A
+contradiction that holds corrects the earlier finding.
 
 ### Step 6: Close every finding
 
@@ -143,7 +165,9 @@ items to TODO (with a date if the operator gives one), record the refusals.
 
 **Cadence.** Propose a change only on evidence: tighten
 (`review_interval_sessions` in `.claude/jarpa.local.md`, default 15) after a
-would-decide-wrong finding; relax after two reviews in a row with none.
+would-decide-wrong finding; relax after two reviews in a row with none. A
+first review and a window spanning a pause do not tighten: their findings
+accumulated without a review.
 
 ### Step 7: JOURNAL entry
 
@@ -167,6 +191,12 @@ this exact title so the next review and session-start can find it:
 
 Update TODO and PROJECT_PLAN as the closures require. The operator ratifies
 the entry.
+
+Then finish the session-end duties the entry does not cover: prune TODO and
+apply memory hygiene (`/jarpa:session-end`, Steps 3 and 5); the metrics of
+Step 4 stand for its Step 6. Commit the review's fixes as the project
+usually does. A `/jarpa:session-end` run afterwards (by the Stop hook, for
+instance) finds today's review entry and adds no second one.
 
 ## When to Use
 

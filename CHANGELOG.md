@@ -13,7 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   checks project drift (plan vs sessions since the previous review),
   document drift (misfiled or stale content) and method drift (local rules
   vs the methodology), runs the hygiene metrics over the window, and asks
-  the operator an open question on the next sessions and a short retro.
+  the operator, in one message, an open question on the next sessions, a
+  short retro, and whether to run the costly validators.
   Every finding is verified before it is relayed, classed as
   *would-decide-wrong* (naming the decision it would mislead) or *stock*,
   and closed: fixed, scheduled in TODO (re-examined at the next review; a

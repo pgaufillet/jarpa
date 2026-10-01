@@ -29,6 +29,11 @@ Determine the next session number by reading the last `## [YYYY-MM-DD] —
 Session N:` header in `jarpa/JOURNAL.md` and incrementing. Determine the
 date with `date +%F`.
 
+If that last header is today's `Session N: JARPA review` and no work
+followed the review, the review entry stands for this session: append
+nothing and continue with Step 3. A second entry would count as a session
+after the review.
+
 Append using this canonical format:
 
 ```markdown
