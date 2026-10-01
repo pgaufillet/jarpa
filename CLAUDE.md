@@ -49,6 +49,7 @@ hooks/                         # Hook definitions and scripts
 statusline/                    # Statusline script (statusline.sh)
 templates/                     # Template files for /jarpa:init
 tests/                         # Automated test suite
+tools/                         # Maintainer tools (footprint.sh, overlap.py)
 jarpa/                         # JARPA logbook (gitignored, local working docs)
 ```
 
