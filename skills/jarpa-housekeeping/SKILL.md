@@ -37,7 +37,7 @@ Documentation lives in `jarpa/`, archives in `jarpa/archive/`. Settings use YAML
    - Extract all session numbers from JOURNAL.md
    - Verify sequence (e.g., 75, 76, 77... no missing numbers)
    - If gaps found, warn user and investigate (check git log for missing work)
-5. Create archive file: `jarpa/archive/JOURNAL_<date-range>_S<first>-<last>.md`
+5. Create archive file: `jarpa/archive/JOURNAL_<date-range>_S<first>-S<last>.md`
 6. **VALIDATE:** Verify sessions in archive are in numerical order
 7. Update `jarpa/JOURNAL.md`:
    - Keep header with updated archive reference list

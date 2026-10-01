@@ -37,7 +37,7 @@ Automatically detects when archiving is needed based on line count and performs 
    - Identify sessions to archive (keep 5-10 most recent)
    - Extract date range from oldest to newest archived session
    - Extract session number range
-   - Create archive filename: `JOURNAL_YYYY-MM-DD_YYYY-MM-DD_S<first>-<last>.md`
+   - Create archive filename: `JOURNAL_YYYY-MM-DD_YYYY-MM-DD_S<first>-S<last>.md`
 
 6. **Create archive file** in jarpa/archive/:
    ```markdown
