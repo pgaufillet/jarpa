@@ -13,6 +13,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `S<first>-<last>`; they now follow the format contract and
   journal-validator: `JOURNAL_<start>_<end>_S<first>-S<last>.md`.
 
+### Removed
+
+- `session.expected_duration` is no longer written by `/jarpa:init`:
+  nothing read it, session-start targets 2-4 hours. Existing settings files
+  keep it harmlessly.
+
 ## [0.4.0] — 2026-10-01
 
 ### Added
