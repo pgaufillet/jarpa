@@ -111,7 +111,9 @@ renders a gauge in your status line:
   after the first API response) and are global to your account, not this
   session. They stay next to the context state rather than at the right
   edge, which Claude Code uses for its own notifications. If the terminal is
-  too narrow to fit them, they are hidden rather than wrapped. The per-model
+  too narrow to fit them, they are hidden rather than wrapped; after a resize,
+  the line adapts at Claude Code's next update (your next message, for
+  instance). The per-model
   weekly window shown in `/usage` ("Fable") is
   not exposed to statuslines and cannot be displayed.
 

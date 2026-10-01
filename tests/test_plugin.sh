@@ -359,16 +359,16 @@ test_statusline() {
     fi
 
     # Fit boundary: the section is kept only when the full line fits within
-    # COLUMNS minus the 2-column margin left for the interface's own spacing.
+    # COLUMNS minus the 5 columns the interface keeps (2 left, 3 right).
     local full_width
     full_width=$(_disp_width "$out")
     local fits tight
-    fits=$(printf '%s' "$payload" | COLUMNS=$((full_width + 2)) JARPA_SHOW_RATE_LIMITS=1 bash "$statusline")
-    tight=$(printf '%s' "$payload" | COLUMNS=$((full_width + 1)) JARPA_SHOW_RATE_LIMITS=1 bash "$statusline")
+    fits=$(printf '%s' "$payload" | COLUMNS=$((full_width + 5)) JARPA_SHOW_RATE_LIMITS=1 bash "$statusline")
+    tight=$(printf '%s' "$payload" | COLUMNS=$((full_width + 4)) JARPA_SHOW_RATE_LIMITS=1 bash "$statusline")
     TESTS_RUN=$((TESTS_RUN + 1))
     if [[ "$fits" == *"7d "* && "$tight" != *"5h "* && "$tight" == *"ctx "* ]]; then
         TESTS_PASSED=$((TESTS_PASSED + 1))
-        log_success "Rate-limit section kept only with 2-column margin"
+        log_success "Rate-limit section kept only with 5-column margin"
     else
         TESTS_FAILED=$((TESTS_FAILED + 1))
         log_fail "Fit boundary wrong (fits: $fits | tight: $tight)"

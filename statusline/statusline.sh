@@ -184,13 +184,16 @@ if [[ "${JARPA_SHOW_RATE_LIMITS:-}" == "1" ]]; then
 fi
 
 # Append the rate-limit section after a "│" separator. All-or-nothing: if the
-# columns are unknown or the full line would not fit (keeping a small margin
-# for the interface's own spacing), the whole section is dropped rather than
-# wrapped or truncated mid-gauge.
+# columns are unknown or the full line would not fit, the whole section is
+# dropped rather than wrapped or truncated mid-gauge. The interface indents
+# the line by 2 columns and keeps 3 free on the right (measured: on a
+# 68-column terminal a 65-column line was cut to 63 with an ellipsis).
+# Claude Code runs the script again on its next event, not on resize.
+UI_MARGIN=5
 line="$left"
 if [[ -n "$rates" && "${COLUMNS:-}" =~ ^[0-9]+$ ]]; then
     full="$left │ $rates"
-    if [[ "$(disp_width "$full")" -le $(( COLUMNS - 2 )) ]]; then
+    if [[ "$(disp_width "$full")" -le $(( COLUMNS - UI_MARGIN )) ]]; then
         line="$full"
     fi
 fi

@@ -69,8 +69,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   session). They follow the context state after a `│` separator instead of
   being right-justified, since Claude Code displays its own notifications on
   the right side of the status line row. They are hidden all-or-nothing when
-  the line would not fit `$COLUMNS` (minus a 2-column margin) or the width is
-  unknown.
+  the line would not fit `$COLUMNS` (minus the 5 columns the interface keeps:
+  2 on the left, 3 on the right) or the width is unknown. After a resize the
+  line adapts at Claude Code's next update, not at once.
   The per-model weekly window that `/usage` shows ("Fable") is not plumbed to
   the statusline payload, so only these two windows are available. Off by
   default; the base line is unchanged when the variable is unset.
