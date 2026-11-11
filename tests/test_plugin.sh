@@ -660,16 +660,41 @@ test_integration() {
         assert_file_exists "$PLUGIN_ROOT/agents/journal-validator.md" "Referenced agent journal-validator exists"
     fi
 
-    # Review command: invokes both validators; its JOURNAL title is the
+    # Review command: invokes its validator; its JOURNAL title is the
     # contract session-start relies on to find the last review.
     log_info "Checking review contract..."
     local review_cmd="$PLUGIN_ROOT/commands/review.md"
-    for agent in coherence-validator session-reviewer; do
-        assert_contains "$review_cmd" "\`$agent\`" "review invokes $agent"
-        assert_contains "$PLUGIN_ROOT/agents/$agent.md" "From \`/jarpa:review\` only" "$agent is scoped to the review"
-    done
+    local skill_md="$PLUGIN_ROOT/skills/jarpa-methodology/SKILL.md"
+    assert_contains "$review_cmd" "\`coherence-validator\`" "review invokes coherence-validator"
+    assert_contains "$PLUGIN_ROOT/agents/coherence-validator.md" "From \`/jarpa:review\` only" "coherence-validator is scoped to the review"
     assert_contains "$review_cmd" "Session N: JARPA review" "review defines its JOURNAL title"
-    assert_contains "$PLUGIN_ROOT/skills/jarpa-methodology/SKILL.md" "Session N: JARPA review" "methodology states the review title"
+    assert_contains "$skill_md" "Session N: JARPA review" "methodology states the review title"
+
+    # The review's message to the operator defers to a rule by name: the
+    # managed block must carry it, and the skill too (projects without the
+    # block, such as this repository, apply the skill directly).
+    assert_contains "$review_cmd" '"Talking to the operator" rule' "review defers to the operator rule"
+    assert_contains "$PLUGIN_ROOT/templates/CLAUDE_MD_INJECT.md" "\*\*Talking to the operator\*\*" "managed block carries the operator rule"
+    assert_contains "$skill_md" "^### Talking to the Operator" "methodology carries the operator rule"
+
+    # Agent inventory: every agent is listed by test-installation, and every
+    # agent named in the shipped docs exists (stale agent names in listings
+    # have misled users and validators before).
+    log_info "Checking agent inventory..."
+    local inventory="$PLUGIN_ROOT/commands/test-installation.md"
+    local agent_file name
+    for agent_file in "$PLUGIN_ROOT/agents"/*.md; do
+        name=$(basename "$agent_file" .md)
+        assert_contains "$inventory" "^- \`$name\`" "test-installation lists agent $name"
+    done
+    local named
+    named=$(grep -ohE '\b[a-z]+-(validator|reviewer)\b' \
+        "$PLUGIN_ROOT"/commands/*.md "$PLUGIN_ROOT"/agents/*.md \
+        "$PLUGIN_ROOT"/skills/*/SKILL.md "$PLUGIN_ROOT"/templates/*.md \
+        "$PLUGIN_ROOT/README.md" "$PLUGIN_ROOT/CLAUDE.md" | sort -u)
+    for name in $named; do
+        assert_file_exists "$PLUGIN_ROOT/agents/$name.md" "agent named in the docs exists: $name"
+    done
 
     # Upgrade command: managed CLAUDE.md block resync contract
     log_info "Checking upgrade block-resync contract..."

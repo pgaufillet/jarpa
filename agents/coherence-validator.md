@@ -1,11 +1,11 @@
 ---
 name: coherence-validator
-description: Use this agent from /jarpa:review (Step 5) to check cross-document coherence across the 5 JARPA files of an applicative project (PROJECT_PLAN, TODO, REQUIREMENTS, ARCHITECTURE, JOURNAL). Detects contradictions between hierarchy levels and content that has drifted into the wrong layer. Not invoked outside a review. Examples:
+description: Use this agent from /jarpa:review (Step 4) to check cross-document coherence across the 5 JARPA files of an applicative project (PROJECT_PLAN, TODO, REQUIREMENTS, ARCHITECTURE, JOURNAL). Detects contradictions between hierarchy levels and content that has drifted into the wrong layer. Not invoked outside a review. Examples:
 
 <example>
-Context: /jarpa:review has finished its judged part and reaches Step 5.
+Context: /jarpa:review has finished its judged part and reaches its validation.
 user: "/jarpa:review"
-assistant: "I'll launch coherence-validator and session-reviewer in parallel, passing them the findings already made so they report only new ones."
+assistant: "I'll launch coherence-validator, passing it the findings already made so it reports only new ones."
 <commentary>
 The review hands coherence-validator its known findings; the agent runs its checks and reports only what is not on that list, or what contradicts it.
 </commentary>
@@ -14,9 +14,9 @@ The review hands coherence-validator its known findings; the agent runs its chec
 <example>
 Context: The user asks for a coherence check outside a review.
 user: "check that the JARPA docs are still consistent with each other"
-assistant: "That is part of the periodic review; I'll run /jarpa:review, which invokes coherence-validator in its Step 5."
+assistant: "That is part of the periodic review; I'll run /jarpa:review, which invokes coherence-validator in its Step 4."
 <commentary>
-Coherence checks run from the review so their findings get closed (fixed, scheduled or refused) instead of piling up in a report.
+Coherence checks run from the review so their findings get closed (fixed, scheduled or dropped) instead of piling up in a report.
 </commentary>
 </example>
 model: sonnet
@@ -265,7 +265,7 @@ outcome.
 
 ## Integration Points
 
-- **From `/jarpa:review` only** (Step 5), in parallel with session-reviewer.
+- **From `/jarpa:review` only** (Step 4).
   The review verifies each finding before relaying it and closes it.
 - **Not automatic:** no session-start, no session-end, no pre-commit trigger.
   Coherence checks carry enough LLM judgment that automation would produce

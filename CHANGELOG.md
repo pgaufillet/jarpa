@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **"Talking to the operator" rule** in the managed CLAUDE.md block and the
+  methodology skill: explain an identifier, abbreviation or term at its first
+  mention in a session; open with the result or the decision needed; every
+  question carries the situation, the options and a recommendation. Run
+  `/jarpa:upgrade` to resync the block.
+
+### Changed
+
+- **`/jarpa:review` asks far less of the operator.** Reviews in five
+  projects returned 16 to 34 findings each, all to be decided by the
+  operator, often without the context to decide. The review now asks one
+  question at the start (what the next sessions will be about) and sends one
+  message at the end. Claude fixes on its own what concerns the documents
+  being true and in their role, and asks only what needs the operator's
+  intent or knowledge (agenda items and past decisions included), each
+  question with its context and a recommendation. The retro becomes up to
+  three observations drawn from the window, plus one open line. A finding
+  dropped or refused earlier is not raised again without new evidence. The
+  cadence tightens only when a session acted on a wrong or stale document.
+- `coherence-validator` runs in every review, without asking; its token
+  count is recorded in the review entry.
+
+### Removed
+
+- The `session-reviewer` agent: its checks (goal vs results, recurring
+  risks, stale `[ONGOING]` task, Current Step vs sessions) overlapped the
+  review's own project checks, at about 130k tokens per review.
+
 ### Fixed
 
 - `/jarpa:archive` and the housekeeping skill named archives

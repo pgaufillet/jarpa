@@ -1,58 +1,92 @@
 ---
 name: jarpa:review
-description: Periodic JARPA review - project, document and method drift, closed finding by finding
+description: Periodic JARPA review - keeps the jarpa/ docs and CLAUDE.md true and in their role, and questions the method
 ---
 
 # JARPA Review
 
-A periodic retrospective of the project and of its JARPA practice. It
-catches what session-end cannot see from inside one session: goal and
-execution drift, misfiled or stale content, local rules that diverge from
-the methodology.
+A periodic check that the project's documents (PROJECT_PLAN, REQUIREMENTS,
+ARCHITECTURE, TODO, JOURNAL, satellites, CLAUDE.md) still hold their role
+in the methodology, are current and true; and a moment to question the
+method in the light of experience. It catches what session-end cannot see
+from inside one session: plan drifting from intent, stale or misfiled
+content, local rules that no longer serve.
 
-Run it inline in the main conversation; only Step 5 uses sub-agents.
+**The operator's attention is the scarce resource.** The operator works on
+their project, not on its documents. They are asked twice: one question at
+the start, one message at the end. Claude does the checking and the fixing
+in between; the operator decides only what needs their intent or their
+knowledge.
+
+Run it inline in the main conversation; only Step 4 uses a sub-agent.
 `/jarpa:session-start` announces when a review is due and never runs it:
 the operator starts it. When session-start already ran in this session (the
 SessionStart hook asks for it), do not run it again: its summary is where
 the review starts.
 
 **A review is a dedicated session.** No production work alongside it; fixes
-made during the review are limited to the findings the operator accepts.
-It ends with its own JOURNAL entry, which replaces `/jarpa:session-end` for
-this session (Step 7 says which of its duties remain).
+are limited to the review's findings. It ends with its own JOURNAL entry,
+which replaces `/jarpa:session-end` for this session (Step 7 says which of
+its duties remain).
 
 ## Scope Discipline (MANDATORY)
 
 - Read `jarpa/` at the repository root, the root `CLAUDE.md`, and the git
   log of the project's repositories. Read other files only to verify a
   finding (1-3 targeted reads per finding).
-- Change nothing before the operator has decided a finding's closure.
-- **Verify before relaying.** Every finding cites its evidence
-  (`file:line`, commit, JOURNAL entry) and was checked by you, not inferred.
+- **Verify before acting.** Every finding cites its evidence (`file:line`,
+  commit, JOURNAL entry) and was checked by you, not inferred. A fix rests
+  on a verified finding only.
 - Keep the model you started with. If a skill or command that pins another
   model runs during the review, record it in the JOURNAL entry.
 
-## Findings
+## Findings: who decides
 
-Each finding carries:
+Each finding has an **area** (project, document or method), its
+**evidence**, an **owner** and a **closure**: fixed, scheduled as a TODO
+item, or dropped with a one-line reason. No finding leaves the review open.
 
-- **Family** — project, document, method, or retro.
-- **Class** — *would-decide-wrong* when an agent or the operator reading the
-  docs would take a wrong decision because of it; name that decision, or the
-  finding is *stock*. *Stock* is housekeeping: true but misleading no one.
-- **Evidence** — as above.
-- **Closure** — exactly one of: **fixed** during the review, **scheduled**
-  as a TODO item, or **refused** with a one-line reason. No finding leaves
-  the review open. A scheduled item is re-examined at the next review; give
-  it a date only when the project works with dates.
+**The operator owns** a finding whose closure depends on:
 
-A finding already raised by the previous review (scheduled, refused, or not
-closed) is marked **seen twice** and becomes a priority: fix it now or
-schedule it first in TODO.
+- their intent: direction, priorities, scope, requirements, accepted risk,
+  deadlines;
+- something they put on the agenda or already decided (in JOURNAL, TODO or
+  PROJECT_PLAN): never settle or reverse it alone;
+- a fact only they know: the state of hardware, an outside exchange, a
+  decision taken outside the repository;
+- a change to a rule of `CLAUDE.md` (outside the managed block): it goes to
+  the retro (Step 6).
+
+When in doubt, the finding is theirs.
+
+**Claude owns** the rest: whether the documents are true and in their role.
+Stale facts, content in the wrong file, oversize, missing satellite status,
+consumed TODO items, obsolete paths or figures. Fix what you can verify,
+schedule what needs real work, drop the rest with a reason.
+
+**No repeats.** A finding dropped or refused by an earlier review is not
+raised again unless new evidence appears; then say what changed. A finding
+the previous review scheduled and that is still pending is raised again:
+if you own it, do it now or schedule it first in TODO; if the operator owns
+it, it is one of the questions.
 
 ## Process
 
-### Step 1: Locate the window and the previous review
+### Step 1: Ask the operator — one question
+
+Before showing anything, ask: **"What will the next sessions be about?"**,
+with its purpose in a few words: checking that the plan follows what the
+operator wants to do. The documents can be checked against the code, git
+and each other; the operator's intent can only be asked. Never ask "does the
+plan match your intent?" — a closed question gets a yes and hides the
+drift; stating the purpose does not steer the answer, showing the plan
+does. Wait for the answer, then work alone until Step 6.
+
+"I don't know" is an answer: recall in two lines where the plan stands
+(Current Step, head of TODO), ask whether it should change, and record the
+answer as given.
+
+### Step 2: Locate the window and the previous review
 
 Find the last review: the last header matching
 `## [YYYY-MM-DD] — Session N: JARPA review` in `jarpa/JOURNAL.md`, or in
@@ -63,34 +97,16 @@ counted them as due; the JOURNAL entry says so.
 
 Read `jarpa/PROJECT_PLAN.md`, `jarpa/TODO.md` and the window's entries.
 
-### Step 2: Carry over the previous review
+Compare the operator's answer with PROJECT_PLAN's Current Step and TODO's
+Now/Next: a gap between intent and plan is an operator finding.
+
+### Step 3: Carry over the previous review
 
 List the previous review's scheduled items (its `Remaining Work / Next
 Step` section) with their state: done or still pending, and past its date
 when it has one. Pending items are the first findings of this review.
 
-### Step 3: Ask the operator — one message
-
-Before presenting the plan, ask the three questions together, so the
-operator answers once:
-
-1. **The open question: "What will the next sessions be about?"** Never ask
-   "does the plan match your intent?" — a closed question gets a yes and
-   hides the drift.
-2. **The retro**: what helped and what hindered in the window; what to
-   stop, start, continue. On a long window (a first review, or one spanning
-   a pause), ask about its last sessions and name a few of its events as
-   prompts.
-3. **The validators of Step 5**: run them or not. They cost far more than
-   the rest of the review (on a 15-session window, about 150k tokens
-   against about 50k); give the estimate.
-
-Compare the answer to (1) with PROJECT_PLAN's Current Step and TODO's
-Now/Next: a gap between intent and plan is a project finding. Each retro
-answer that asks for a change is a retro finding; a retro left unanswered
-is noted in the JOURNAL entry, not counted as a finding.
-
-### Step 4: Measured and judged parts
+### Step 4: Check — measure, judge, validate
 
 **Measure.** Run the metrics script over the window (the date of its first
 entry); journal entry sizes and session references in commits then cover
@@ -102,13 +118,16 @@ bash "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/metrics.sh" --since <date>
 
 Each `[!!]` line is a finding to verify and close.
 
-**Judge.** Review the four families; stop at what you can verify.
+**Judge.** Stop at what you can verify.
 
-- **Project** — plan vs sessions of the window.
+- **Project** — plan vs the window's sessions.
   - Age of the Current Step: sessions since it last changed.
   - Exit criteria or commitments with no progress in the window; declared
     deadlines, if any, with no action.
   - Sessions off the Current Step, and whether the plan should follow them.
+  - Sessions whose Results fall materially short of their Goal without
+    saying so; a risk or blocker recurring across entries; an `[ONGOING]`
+    task already in the Goal of the window's first entry.
   - Temporary plans still alive: `jarpa-status: temporary` satellites and
     sprint or run-sheet sections kept inside TODO or PROJECT_PLAN — consumed,
     or still needed? Past their date when they have one (the metrics flag
@@ -116,58 +135,72 @@ Each `[!!]` line is a finding to verify and close.
 - **Documents** — content in the wrong file or no longer true.
   - Narrative or backlog in PROJECT_PLAN; new needs appearing only in TODO;
     decisions recorded only in JOURNAL that ARCHITECTURE should carry.
-  - Paths, components and figures cited by ARCHITECTURE and REQUIREMENTS
-    that no longer exist or no longer hold.
+  - Paths, components and figures cited by ARCHITECTURE, REQUIREMENTS and
+    `CLAUDE.md` that no longer exist or no longer hold.
   - Satellites: missing status, `living` but stale, `temporary` but consumed.
 - **Method** — local practice vs the canonical methodology (the
   jarpa-methodology skill).
   - Rules in `CLAUDE.md` outside the managed block, and conventions visible
-    in `jarpa/`, that contradict or extend the canonical rules; a local rule
-    on trial says when it is re-examined (next review by default).
+    in `jarpa/`, that contradict, extend or duplicate the canonical rules;
+    a local rule on trial reaching its re-examination (next review by
+    default).
   - Rules written for a specific model.
   - Session references in commits (from the metrics).
-- **Retro** — the findings from the answers to Step 3.
 
-### Step 5: Validators — new findings only
+**Validate.** Launch the `coherence-validator` agent; do not ask first. Pass
+it:
 
-Only if the operator accepted them in Step 3; otherwise record that they
-were declined in the JOURNAL entry and go to Step 6.
-
-Launch both agents in parallel (a single message with two Agent calls):
-
-- `coherence-validator` — cross-document coherence.
-- `session-reviewer` — with the window of Step 1.
-
-Pass each:
-
-- the list of findings already made (one line each: family, file, claim),
-  asking it to report only findings not on that list and to say when it
-  contradicts one;
+- the findings already made (one line each: area, file, claim), asking it
+  to report only findings not on that list and to say when it contradicts
+  one;
 - this review's Scope Discipline: `jarpa/` at the repository root, the root
   `CLAUDE.md`, the project's repositories — never user configuration
   (`~/.claude`) or other projects.
 
-Verify each new finding before relaying it: open the cited file at the cited
+Verify each new finding before using it: open the cited file at the cited
 line (a line number past the end of the file means the finding is not
-verified). Drop the ones that do not hold and say how many were dropped. A
-contradiction that holds corrects the earlier finding.
+verified). Drop the ones that do not hold and count them. A contradiction
+that holds corrects the earlier finding. Note the agent's token count, when
+the tool reports one, for the JOURNAL entry.
 
-### Step 6: Close every finding
+### Step 5: Close what you own
 
-Present the findings as one table, would-decide-wrong first:
+Apply your fixes, add the scheduled items to TODO, record what you dropped
+and why. Commit the fixes as the project usually does, apart from other
+work, so the operator can read or revert them in one place.
 
-```
-| # | Family | Class (decision misled) | Evidence | Proposed closure |
-```
+### Step 6: One message to the operator
 
-The operator decides each closure. Apply the fixes, add the scheduled
-items to TODO (with a date if the operator gives one), record the refusals.
+Follow the "Talking to the operator" rule of the managed `CLAUDE.md` block:
+explain each identifier or term at its first mention, in plain words;
+speak of the project, not of the documents; no area, owner or finding
+numbers.
+
+1. **What you did, in one line**: fixed / scheduled / dropped counts and the
+   commit. The details are in the JOURNAL entry.
+2. **The questions**: the operator's findings, related ones grouped, the
+   most consequential first. Each carries what an informed decision needs:
+   the situation and why it arises now, the options and what each changes,
+   your recommendation and its reason, and what happens if nothing is done.
+   If you cannot give that context, investigate before asking.
+3. **The retro**: zero to three observations drawn from the window about
+   the method itself — a rule bypassed or never useful, a friction that
+   recurs, a document nobody uses, the weight of the review itself — each
+   with a proposal: keep, change or drop. Then one open line: is anything
+   in the method weighing on the operator? With nothing to observe, say
+   nothing. A point that belongs to the plugin (a check that does not fit
+   the project, a script defect) is recorded once in the JOURNAL entry as
+   plugin feedback, not raised again.
+
+Apply the operator's decisions. A question left unanswered is scheduled
+first in TODO with its context; it is never decided by default.
 
 **Cadence.** Propose a change only on evidence: tighten
-(`review_interval_sessions` in `.claude/jarpa.local.md`, default 15) after a
-would-decide-wrong finding; relax after two reviews in a row with none. A
-first review and a window spanning a pause do not tighten: their findings
-accumulated without a review.
+(`review_interval_sessions` in `.claude/jarpa.local.md`, default 15) when a
+session of the window acted on a document that was wrong or stale — name
+the session and what it did; relax after two reviews in a row without such
+a case. A first review and a window spanning a pause do not tighten: their
+findings accumulated without a review.
 
 ### Step 7: JOURNAL entry
 
@@ -184,19 +217,19 @@ this exact title so the next review and session-start can find it:
   copied as they are (one `- Milestone:` line each), after the closures
   have updated PROJECT_PLAN. Session-start compares them with PROJECT_PLAN
   to announce the next review on a milestone change.
-- **Results**: the findings table with their closures; the number of
-  validator findings dropped.
+- **Results**: the findings, one line each (area, owner, evidence,
+  closure); the number of validator findings dropped and the validator's
+  token count when known; the retro's outcome; plugin feedback, if any.
 - **Remaining Work / Next Step**: the scheduled items (and their dates, if
-  any) — the next review starts from this list.
+  any), unanswered questions first — the next review starts from this list.
 
-Update TODO and PROJECT_PLAN as the closures require. The operator ratifies
-the entry.
+Update TODO and PROJECT_PLAN as the closures require.
 
 Then finish the session-end duties the entry does not cover: prune TODO and
 apply memory hygiene (`/jarpa:session-end`, Steps 3 and 5); the metrics of
-Step 4 stand for its Step 6. Commit the review's fixes as the project
-usually does. A `/jarpa:session-end` run afterwards (by the Stop hook, for
-instance) finds today's review entry and adds no second one.
+Step 4 stand for its Step 6. Commit the entry as the project usually does.
+A `/jarpa:session-end` run afterwards (by the Stop hook, for instance)
+finds today's review entry and adds no second one.
 
 ## When to Use
 

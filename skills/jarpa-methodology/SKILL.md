@@ -126,6 +126,19 @@ archive older sessions to `jarpa/archive/`. Keep 5-10 recent sessions in active 
 - Work only on the current task. No scope creep.
 - Surface risks, ambiguities, or missing requirements immediately.
 
+### Talking to the Operator
+The operator works on the project, not on its docs, and does not reread them
+every session.
+- **Explicit**: the first time in a session you use an identifier (M6.14,
+  D35, S202), an abbreviation, or a project or method term, give its meaning
+  in a few plain words; afterwards use it bare.
+- **Concise**: open with the result or the decision needed; no process
+  narration, nothing the operator already knows.
+- **Contextualised**: every question carries what an informed decision
+  needs: the situation and why it arises now, the options and what each
+  changes, your recommendation and its reason. Investigate before asking.
+  Scale the context to the stakes.
+
 ### End of Session (Mandatory)
 1. Append entry to JOURNAL.md.
 2. Update PROJECT_PLAN.md only if the current step or a milestone status changed.
@@ -136,9 +149,13 @@ archive older sessions to `jarpa/archive/`. Keep 5-10 recent sessions in active 
 ### Periodic Review
 `/jarpa:review` runs as a dedicated session when session start announces it
 due (every 15 sessions, after a pause of over 30 days, or on a milestone
-change). It checks project, document and method drift; every finding is fixed,
-scheduled in TODO (with a date only if the project uses dates), or refused, and the next review starts from
-the scheduled ones. Its JOURNAL entry is titled `Session N: JARPA review`.
+change). It keeps the documents true and in their role and questions the
+method. Claude fixes what it can verify; the operator answers one question at
+the start ("what will the next sessions be about?") and, at the end, decides
+only what needs their intent or knowledge. Every finding is fixed, scheduled
+in TODO (with a date only if the project uses dates), or dropped with a
+reason, and the next review starts from the scheduled ones. Its JOURNAL entry
+is titled `Session N: JARPA review`.
 
 ## Context Management
 

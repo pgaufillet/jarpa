@@ -148,11 +148,17 @@ window; `/jarpa:review` passes the date of its first entry.
 
 ## Periodic Review
 
-`/jarpa:review` is a dedicated session that checks project, document and
-method drift since the previous review and closes every finding: fixed,
-scheduled in TODO (re-examined at the next review, with a date if your
-project uses dates), or refused. Session start announces it when
-due and never runs it:
+`/jarpa:review` is a dedicated session that keeps the `jarpa/` documents
+and `CLAUDE.md` true and in their role, and questions the method in the
+light of the sessions since the previous review. It asks you one question at
+the start (what the next sessions will be about), then checks and fixes on
+its own what it can verify: stale facts, misfiled content, oversize. It ends
+with one message: what it fixed, the few decisions that need your intent or
+knowledge (each with its context and a recommendation), and up to three
+observations on the method. Every finding is fixed, scheduled in TODO
+(re-examined at the next review, with a date if your project uses dates), or
+dropped with a reason. Session start announces it when due and never runs
+it:
 
 | Trigger | Setting (`.claude/jarpa.local.md`) |
 |---|---|
@@ -172,7 +178,7 @@ archived journals included. Check by hand:
 | `/jarpa:session-end` | End-of-session documentation (also triggered automatically) |
 | `/jarpa:archive` | Archive older journal entries when JOURNAL.md grows large |
 | `/jarpa:status` | Show current project status |
-| `/jarpa:review` | Periodic review of project, document and method drift; every finding closed |
+| `/jarpa:review` | Periodic review: keeps the docs true and in their role; you decide only what needs you |
 | `/jarpa:upgrade` | Upgrade consumer jarpa/ files to the current on-disk format and resync the managed CLAUDE.md block |
 | `/jarpa:test-installation` | Verify the plugin is installed correctly |
 
