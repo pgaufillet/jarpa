@@ -5,7 +5,7 @@ All notable changes to the JARPA plugin are recorded here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.5.0] — 2026-11-11
 
 ### Added
 
@@ -36,18 +36,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The `session-reviewer` agent: its checks (goal vs results, recurring
   risks, stale `[ONGOING]` task, Current Step vs sessions) overlapped the
   review's own project checks, at about 130k tokens per review.
+- `session.expected_duration` is no longer written by `/jarpa:init`:
+  nothing read it, session-start targets 2-4 hours. Existing settings files
+  keep it harmlessly.
 
 ### Fixed
 
 - `/jarpa:archive` and the housekeeping skill named archives
   `S<first>-<last>`; they now follow the format contract and
   journal-validator: `JOURNAL_<start>_<end>_S<first>-S<last>.md`.
-
-### Removed
-
-- `session.expected_duration` is no longer written by `/jarpa:init`:
-  nothing read it, session-start targets 2-4 hours. Existing settings files
-  keep it harmlessly.
 
 ## [0.4.0] — 2026-10-01
 
