@@ -45,6 +45,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `/jarpa:archive` and the housekeeping skill named archives
   `S<first>-<last>`; they now follow the format contract and
   journal-validator: `JOURNAL_<start>_<end>_S<first>-S<last>.md`.
+- README: the from-source install relied on a `pluginDirs` setting that
+  Claude Code does not read; it now uses `claude --plugin-dir`. The command
+  table lists `/jarpa:session-start`.
 
 ## [0.4.0] — 2026-10-01
 

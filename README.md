@@ -44,15 +44,11 @@ claude plugin enable --scope local jarpa@hephaistos
 
 ```bash
 git clone https://github.com/pgaufillet/jarpa.git ~/jarpa
+claude --plugin-dir ~/jarpa
 ```
 
-Add to `~/.claude/settings.json`:
-
-```json
-{
-  "pluginDirs": ["~/jarpa"]
-}
-```
+`--plugin-dir` loads the plugin for that session only, and takes precedence
+over an installed copy of JARPA.
 
 ### Prerequisites
 
@@ -175,6 +171,7 @@ archived journals included. Check by hand:
 | Command | Description |
 |---|---|
 | `/jarpa:init` | Initialize JARPA documentation structure in your project |
+| `/jarpa:session-start` | Where the project stands, task scope, archive and review due (also triggered automatically) |
 | `/jarpa:session-end` | End-of-session documentation (also triggered automatically) |
 | `/jarpa:archive` | Archive older journal entries when JOURNAL.md grows large |
 | `/jarpa:status` | Show current project status |
